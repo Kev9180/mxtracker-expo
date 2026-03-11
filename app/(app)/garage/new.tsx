@@ -16,6 +16,7 @@ import { useState } from 'react'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
+import { CardColorPicker } from '../../../components/CardColorPicker'
 
 type EngineConfig = 'inline' | 'v' | 'boxer' | 'rotary' | 'other'
 type DriveType = 'FWD' | 'RWD' | 'AWD' | '4WD'
@@ -29,6 +30,7 @@ interface VehicleForm {
   trim: string
   nickname: string
   color: string
+  card_color: string
   vin: string
   current_mileage: string
   engine_displacement: string
@@ -44,7 +46,7 @@ interface VehicleForm {
 
 const EMPTY_FORM: VehicleForm = {
   year: '', make: '', model: '', trim: '', nickname: '',
-  color: '', vin: '', current_mileage: '',
+  color: '', card_color: '', vin: '', current_mileage: '',
   engine_displacement: '', engine_config: '', cylinders: '',
   drive: '', transmission: '',
   fuel_type: '', purchase_date: '', license_plate: '', license_plate_state: '',
@@ -315,6 +317,7 @@ export default function NewVehicle() {
       trim: form.trim.trim() || null,
       nickname: form.nickname.trim() || null,
       color: form.color.trim() || null,
+      card_color: form.card_color || null,
       vin: form.vin.trim() || null,
       current_mileage: form.current_mileage ? parseInt(form.current_mileage) : null,
       engine_displacement: form.engine_displacement ? parseFloat(form.engine_displacement) : null,
@@ -368,6 +371,10 @@ export default function NewVehicle() {
             <Field label="TRIM" value={form.trim} onChangeText={v => set('trim', v)} placeholder="e.g. SR5, Limited" dark={dark} />
             <Field label="NICKNAME" value={form.nickname} onChangeText={v => set('nickname', v)} placeholder='e.g. "The Beast"' dark={dark} />
             <Field label="COLOR" value={form.color} onChangeText={v => set('color', v)} placeholder="e.g. Silver" dark={dark} />
+            <CardColorPicker
+              value={form.card_color || null}
+              onChange={v => set('card_color', v)}
+            />
             <Field label="VIN" value={form.vin} onChangeText={v => set('vin', v.toUpperCase())} placeholder="17-character VIN" autoCapitalize="characters" maxLength={17} dark={dark} />
             <Field label="CURRENT MILEAGE" value={form.current_mileage} onChangeText={v => set('current_mileage', v.replace(/[^0-9]/g, ''))} placeholder="e.g. 120000" keyboardType="numeric" autoCapitalize="none" dark={dark} />
           </View>

@@ -68,26 +68,16 @@ export default function GarageScreen() {
     }
 
     return (
-      <Swipeable
-        renderRightActions={renderRightActions}
-        overshootRight={false}
-      >
+      <Swipeable renderRightActions={renderRightActions} overshootRight={false}>
         <TouchableOpacity
           style={s.card}
           onPress={() => router.push(`/(app)/garage/${vehicle.id}`)}
           activeOpacity={0.8}
         >
-          {/* Photo or placeholder */}
-          <View style={s.photoContainer}>
-            {vehicle.photo_url ? (
-              <Image source={{ uri: vehicle.photo_url }} style={s.photo} />
-            ) : (
-              <View style={s.photoPlaceholder}>
-                <Ionicons name="car-outline" size={40} color={dark ? '#333' : '#ccc'} />
-              </View>
-            )}
+          {/* Color accent bar */}
+          <View style={[s.colorBar, { backgroundColor: vehicle.card_color ?? '#e3001b' }]}>
+            <View style={s.colorBarInner} />
           </View>
-
           {/* Info */}
           <View style={s.cardBody}>
             <View style={s.cardHeader}>
@@ -102,9 +92,7 @@ export default function GarageScreen() {
               {vehicle.current_mileage ? (
                 <View style={s.stat}>
                   <Ionicons name="speedometer-outline" size={12} color={dark ? '#555' : '#aaa'} />
-                  <Text style={s.statText}>
-                    {vehicle.current_mileage.toLocaleString()} mi
-                  </Text>
+                  <Text style={s.statText}>{vehicle.current_mileage.toLocaleString()} mi</Text>
                 </View>
               ) : null}
               {vehicle.fuel_type ? (
@@ -268,25 +256,21 @@ const styles = (dark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: dark ? '#2a2a2a' : '#e8e8e8',
     overflow: 'hidden',
-  },
-  photoContainer: {
-    width: '100%',
-    height: 180,
-  },
-  photo: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  photoPlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: dark ? '#111' : '#f8f8f8',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: 'row',
   },
   cardBody: {
-    padding: 16,
+    flex: 1,
+    padding: 16
+  },
+  colorBar: {
+    width: 8,
+    alignSelf: 'stretch',
+  },  
+  colorBarInner: {
+    position: 'absolute',
+    top: 0, bottom: 0, right: 0,
+    width: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   cardHeader: {
     flexDirection: 'row',

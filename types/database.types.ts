@@ -224,6 +224,7 @@ export type Database = {
           user_id: string
           vin: string | null
           year: number
+          card_color: string | null
         }
         Insert: {
           color?: string | null
@@ -248,6 +249,7 @@ export type Database = {
           user_id: string
           vin?: string | null
           year: number
+          card_color: string | null
         }
         Update: {
           color?: string | null
@@ -272,6 +274,7 @@ export type Database = {
           user_id?: string
           vin?: string | null
           year?: number
+          card_color: string | null
         }
         Relationships: []
       }
