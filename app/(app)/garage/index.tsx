@@ -1,3 +1,5 @@
+import 'react-native-gesture-handler'
+import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler'
 import {
   View,
   Text,
@@ -8,9 +10,10 @@ import {
   RefreshControl,
   ActivityIndicator,
   Image,
+  Alert
 } from 'react-native'
 import { useEffect, useState, useCallback } from 'react'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../types/database.types'
@@ -37,7 +40,11 @@ export default function GarageScreen() {
     setRefreshing(false)
   }
 
-  useEffect(() => { fetchVehicles() }, [])
+  useFocusEffect(
+    useCallback(() => {
+      fetchVehicles()
+    }, [])
+  )
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
@@ -48,61 +55,74 @@ export default function GarageScreen() {
     const title = `${vehicle.year} ${vehicle.make} ${vehicle.model}`
     const subtitle = [vehicle.trim, vehicle.nickname].filter(Boolean).join(' · ')
 
+    function renderRightActions() {
+      return (
+        <TouchableOpacity
+          style={s.deleteAction}
+          onPress={() => deleteVehicle(vehicle.id)}
+        >
+          <Ionicons name="trash-outline" size={24} color="#fff" />
+          <Text style={s.deleteActionText}>DELETE</Text>
+        </TouchableOpacity>
+      )
+    }
+
     return (
-      <TouchableOpacity
-        style={s.card}
-        onPress={() => router.push(`/(app)/garage/${vehicle.id}`)}
-        activeOpacity={0.8}
+      <Swipeable
+        renderRightActions={renderRightActions}
+        overshootRight={false}
       >
-        {/* Photo or placeholder */}
-        <View style={s.photoContainer}>
-          {vehicle.photo_url ? (
-            <Image source={{ uri: vehicle.photo_url }} style={s.photo} />
-          ) : (
-            <View style={s.photoPlaceholder}>
-              <Ionicons name="car-outline" size={40} color={dark ? '#333' : '#ccc'} />
+        <TouchableOpacity
+          style={s.card}
+          onPress={() => router.push(`/(app)/garage/${vehicle.id}`)}
+          activeOpacity={0.8}
+        >
+          {/* Photo or placeholder */}
+          <View style={s.photoContainer}>
+            {vehicle.photo_url ? (
+              <Image source={{ uri: vehicle.photo_url }} style={s.photo} />
+            ) : (
+              <View style={s.photoPlaceholder}>
+                <Ionicons name="car-outline" size={40} color={dark ? '#333' : '#ccc'} />
+              </View>
+            )}
+          </View>
+
+          {/* Info */}
+          <View style={s.cardBody}>
+            <View style={s.cardHeader}>
+              <Text style={s.vehicleTitle} numberOfLines={1}>{title}</Text>
+              <Ionicons name="chevron-forward" size={16} color={dark ? '#444' : '#ccc'} />
             </View>
-          )}
-        </View>
-
-        {/* Info */}
-        <View style={s.cardBody}>
-          <View style={s.cardHeader}>
-            <Text style={s.vehicleTitle} numberOfLines={1}>{title}</Text>
-            <Ionicons name="chevron-forward" size={16} color={dark ? '#444' : '#ccc'} />
+            {subtitle ? (
+              <Text style={s.vehicleSubtitle} numberOfLines={1}>{subtitle}</Text>
+            ) : null}
+            <View style={s.divider} />
+            <View style={s.statsRow}>
+              {vehicle.current_mileage ? (
+                <View style={s.stat}>
+                  <Ionicons name="speedometer-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                  <Text style={s.statText}>
+                    {vehicle.current_mileage.toLocaleString()} mi
+                  </Text>
+                </View>
+              ) : null}
+              {vehicle.fuel_type ? (
+                <View style={s.stat}>
+                  <Ionicons name="flame-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                  <Text style={s.statText}>{vehicle.fuel_type}</Text>
+                </View>
+              ) : null}
+              {vehicle.drive ? (
+                <View style={s.stat}>
+                  <Ionicons name="git-network-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                  <Text style={s.statText}>{vehicle.drive}</Text>
+                </View>
+              ) : null}
+            </View>
           </View>
-          {subtitle ? (
-            <Text style={s.vehicleSubtitle} numberOfLines={1}>{subtitle}</Text>
-          ) : null}
-
-          {/* Divider */}
-          <View style={s.divider} />
-
-          {/* Stats row */}
-          <View style={s.statsRow}>
-            {vehicle.current_mileage ? (
-              <View style={s.stat}>
-                <Ionicons name="speedometer-outline" size={12} color={dark ? '#555' : '#aaa'} />
-                <Text style={s.statText}>
-                  {vehicle.current_mileage.toLocaleString()} mi
-                </Text>
-              </View>
-            ) : null}
-            {vehicle.fuel_type ? (
-              <View style={s.stat}>
-                <Ionicons name="flame-outline" size={12} color={dark ? '#555' : '#aaa'} />
-                <Text style={s.statText}>{vehicle.fuel_type}</Text>
-              </View>
-            ) : null}
-            {vehicle.drive ? (
-              <View style={s.stat}>
-                <Ionicons name="git-network-outline" size={12} color={dark ? '#555' : '#aaa'} />
-                <Text style={s.statText}>{vehicle.drive}</Text>
-              </View>
-            ) : null}
-          </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </Swipeable>
     )
   }
 
@@ -116,6 +136,31 @@ export default function GarageScreen() {
     )
   }
 
+  async function deleteVehicle(id: string) {
+    Alert.alert(
+      'Delete Vehicle',
+      'This will permanently delete the vehicle and all its maintenance records. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const { error } = await supabase
+              .from('vehicles')
+              .delete()
+              .eq('id', id)
+            if (error) {
+              Alert.alert('Error', error.message)
+            } else {
+              setVehicles(prev => prev.filter(v => v.id !== id))
+            }
+          }
+        }
+      ]
+    )
+  }
+
   if (loading) {
     return (
       <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -125,43 +170,45 @@ export default function GarageScreen() {
   }
 
   return (
-    <View style={s.container}>
-      {/* Header */}
-      <View style={s.header}>
-        <View>
-          <Text style={s.headerTitle}>GARAGE</Text>
-          <Text style={s.headerSubtitle}>
-            {vehicles.length} {vehicles.length === 1 ? 'VEHICLE' : 'VEHICLES'}
-          </Text>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={s.container}>
+        {/* Header */}
+        <View style={s.header}>
+          <View>
+            <Text style={s.headerTitle}>GARAGE</Text>
+            <Text style={s.headerSubtitle}>
+              {vehicles.length} {vehicles.length === 1 ? 'VEHICLE' : 'VEHICLES'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={s.addButton}
+            onPress={() => router.push('/(app)/garage/new')}
+          >
+            <Ionicons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={s.addButton}
-          onPress={() => router.push('/(app)/garage/new')}
-        >
-          <Ionicons name="add" size={24} color="#fff" />
-        </TouchableOpacity>
+
+        {/* Red accent bar */}
+        <View style={s.accentBar} />
+
+        {/* Vehicle list */}
+        <FlatList
+          data={vehicles}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <VehicleCard vehicle={item} />}
+          ListEmptyComponent={<EmptyState />}
+          contentContainerStyle={s.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#e3001b"
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        />
       </View>
-
-      {/* Red accent bar */}
-      <View style={s.accentBar} />
-
-      {/* Vehicle list */}
-      <FlatList
-        data={vehicles}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <VehicleCard vehicle={item} />}
-        ListEmptyComponent={<EmptyState />}
-        contentContainerStyle={s.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#e3001b"
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      />
-    </View>
+    </GestureHandlerRootView>
   )
 }
 
@@ -278,7 +325,6 @@ const styles = (dark: boolean) => StyleSheet.create({
     color: dark ? '#555' : '#aaa',
     fontWeight: '600',
     letterSpacing: 0.5,
-    textTransform: 'capitalize',
   },
 
   // Empty state
@@ -299,5 +345,21 @@ const styles = (dark: boolean) => StyleSheet.create({
     fontSize: 13,
     color: dark ? '#333' : '#bbb',
     letterSpacing: 1,
+  },
+
+  // Delete action
+  deleteAction: {
+    backgroundColor: '#e3001b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    marginBottom: 16,
+  },
+  deleteActionText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginTop: 4,
   },
 })
