@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router'
-import { Text, useColorScheme } from 'react-native'
+import { useColorScheme } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 
 export default function AppLayout() {
   const scheme = useColorScheme()
@@ -25,40 +26,44 @@ export default function AppLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ href: null }} // hide the redirect from tab bar
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="garage"
         options={{
           title: 'GARAGE',
-          tabBarIcon: ({ color }) => <TabIcon icon="🚗" />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="car" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="records"
         options={{
           title: 'RECORDS',
-          tabBarIcon: ({ color }) => <TabIcon icon="🔧" />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="construct" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="reminders"
         options={{
           title: 'REMINDERS',
-          tabBarIcon: ({ color }) => <TabIcon icon="🔔" />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="notifications" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'SETTINGS',
-          tabBarIcon: ({ color }) => <TabIcon icon="⚙️" />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" color={color} size={size} />
+          ),
         }}
       />
     </Tabs>
   )
-}
-
-function TabIcon({ icon }: { icon: string }) {
-  return <Text style={{ fontSize: 20 }}>{icon}</Text>
 }
