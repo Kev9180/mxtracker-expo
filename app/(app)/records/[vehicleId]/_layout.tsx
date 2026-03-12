@@ -1,11 +1,11 @@
 import { Stack } from 'expo-router'
 
-export default function RemindersLayout() {
+export default function RecordLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="[vehicleId]" />
-      <Stack.Screen name="[vehicleId]/[recordId]" />
+      <Stack.Screen name="new" />
+      <Stack.Screen name="[recordId]" />
     </Stack>
   )
 }
