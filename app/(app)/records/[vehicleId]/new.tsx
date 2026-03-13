@@ -4,7 +4,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
   ScrollView,
   ActivityIndicator,
   Alert,
@@ -17,6 +16,7 @@ import { useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../../lib/supabase'
+import { useTheme } from '../../../../lib/ThemeContext'
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -130,7 +130,7 @@ function DatePickerModal({ visible, value, onConfirm, onCancel, dark }: {
 
 export default function NewRecord() {
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
-  const dark = useColorScheme() === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const [taskName, setTaskName] = useState('')

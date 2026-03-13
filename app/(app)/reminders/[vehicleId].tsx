@@ -4,7 +4,6 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
@@ -16,6 +15,7 @@ import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../types/database.types'
+import { useTheme } from '../../../lib/ThemeContext'
 
 type MaintenanceRecord = Database['public']['Tables']['maintenance_records']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
@@ -35,7 +35,7 @@ function isOverdue(dateStr: string | null | undefined): boolean {
 
 export default function VehicleRemindersScreen() {
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
-  const dark = useColorScheme() === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)

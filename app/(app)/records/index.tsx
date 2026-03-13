@@ -2,7 +2,6 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
@@ -12,11 +11,12 @@ import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../types/database.types'
+import { useTheme } from '../../../lib/ThemeContext'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 
 export default function RecordsScreen() {
-  const dark = useColorScheme() === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([])

@@ -2,7 +2,6 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   ScrollView,
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -20,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../types/database.types'
 import { useProfile } from '../../../lib/ProfileContext'
+import { useTheme } from '../../../lib/ThemeContext'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type ThemePreference = 'system' | 'light' | 'dark'
@@ -205,14 +205,14 @@ function PickerModal({ visible, title, options, current, onSelect, onCancel, dar
 // ── Main Component ─────────────────────────────────────────────
 
 export default function SettingsScreen() {
-  const dark = useColorScheme() === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const { profile, refreshProfile } = useProfile()
   const [userEmail, setUserEmail] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [themePreference, setThemePreference] = useState<ThemePreference>('system')
+  const { preference: themePreference, setPreference } = useTheme()
 
   const [editModal, setEditModal] = useState<{
     visible: boolean; field: string; title: string
@@ -330,7 +330,7 @@ export default function SettingsScreen() {
         title="APPEARANCE"
         options={themeOptions}
         current={themePreference}
-        onSelect={(v) => { setThemePreference(v as ThemePreference); setShowThemeModal(false) }}
+        onSelect={(v) => { setPreference(v as ThemePreference); setShowThemeModal(false) }}
         onCancel={() => setShowThemeModal(false)}
         dark={dark}
       />

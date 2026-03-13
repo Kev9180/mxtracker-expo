@@ -4,7 +4,6 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   SectionList,
   TouchableOpacity,
   ActivityIndicator,
@@ -16,6 +15,7 @@ import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../../lib/supabase'
 import { Database } from '../../../../types/database.types'
+import { useTheme } from '../../../../lib/ThemeContext'
 
 type MaintenanceRecord = Database['public']['Tables']['maintenance_records']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
@@ -79,7 +79,7 @@ function StatusBadge({ status, dark }: { status: string; dark: boolean }) {
 
 export default function VehicleRecordsScreen() {
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
-  const dark = useColorScheme() === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)

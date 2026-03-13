@@ -4,7 +4,6 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   FlatList,
   TouchableOpacity,
   RefreshControl,
@@ -18,12 +17,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../types/database.types'
 import { useProfile } from '../../../lib/ProfileContext'
+import { useTheme } from '../../../lib/ThemeContext'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 
 export default function GarageScreen() {
-  const scheme = useColorScheme()
-  const dark = scheme === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([])

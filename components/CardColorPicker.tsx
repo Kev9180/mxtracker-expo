@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useTheme } from '../lib/ThemeContext'
 
 export const CARD_COLORS = [
   // Whites & silvers
@@ -44,7 +45,7 @@ interface Props {
 }
 
 export function CardColorPicker({ value, onChange, disabled }: Props) {
-  const dark = useColorScheme() === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   return (

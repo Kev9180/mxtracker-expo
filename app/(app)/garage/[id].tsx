@@ -4,7 +4,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
   ScrollView,
   ActivityIndicator,
   Alert,
@@ -18,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../types/database.types'
 import { CardColorPicker } from '../../../components/CardColorPicker'
+import { useTheme } from '../../../lib/ThemeContext'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 type EngineConfig = 'inline' | 'v' | 'boxer' | 'rotary' | 'other'
@@ -244,8 +244,7 @@ function DatePickerModal({ visible, value, onConfirm, onCancel, dark }: {
 
 export default function VehicleDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const scheme = useColorScheme()
-  const dark = scheme === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)

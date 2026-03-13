@@ -4,7 +4,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
   ScrollView,
   ActivityIndicator,
   Alert,
@@ -19,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../../lib/supabase'
 import { Database } from '../../../../types/database.types'
 import { useProfile } from '../../../../lib/ProfileContext'
+import { useTheme } from '../../../../lib/ThemeContext'
 
 type MaintenanceRecord = Database['public']['Tables']['maintenance_records']['Row']
 
@@ -187,7 +187,7 @@ function DatePickerModal({ visible, value, onConfirm, onCancel, dark }: {
 
 export default function RecordDetail() {
   const { vehicleId, recordId } = useLocalSearchParams<{ vehicleId: string; recordId: string }>()
-  const dark = useColorScheme() === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const [record, setRecord] = useState<MaintenanceRecord | null>(null)
@@ -340,7 +340,8 @@ export default function RecordDetail() {
         <View style={s.sectionBody}>
           <ReadRow label="TASK" value={record.task_name} dark={dark} />
           <ReadRow label="DATE" value={formatDate(record.completed_date)} dark={dark} />
-          <ReadRow label="MILEAGE AT SERVICE" value={record.mileage_at_service != null ? `${record.mileage_at_service.toLocaleString()} ${profile?.odometer_unit === 'kilometers' ? 'km' : 'mi'}` : null} dark={dark} />          <ReadRow label="PERFORMED BY" value={record.performed_by} dark={dark} />
+          <ReadRow label="MILEAGE AT SERVICE" value={record.mileage_at_service != null ? `${record.mileage_at_service.toLocaleString()} ${profile?.odometer_unit === 'kilometers' ? 'km' : 'mi'}` : null} dark={dark} />          
+          <ReadRow label="PERFORMED BY" value={record.performed_by} dark={dark} />
           <ReadRow label="COST" value={record.cost != null ? `$${parseFloat(String(record.cost)).toFixed(2)}` : null} dark={dark} />
           <ReadRow label="NOTES" value={record.notes} dark={dark} />
         </View>

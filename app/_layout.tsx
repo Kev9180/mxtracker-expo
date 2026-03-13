@@ -3,6 +3,7 @@ import { Slot, useRouter, useSegments } from 'expo-router'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { ProfileProvider } from '../lib/ProfileContext'
+import { ThemeProvider } from '../lib/ThemeContext'
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null)
@@ -45,8 +46,10 @@ export default function RootLayout() {
   if (!initialized) return null
 
   return (
-    <ProfileProvider>
-      <Slot></Slot>
-    </ProfileProvider>
+    <ThemeProvider>
+      <ProfileProvider>
+        <Slot />
+      </ProfileProvider>
+    </ThemeProvider>
   )
 }

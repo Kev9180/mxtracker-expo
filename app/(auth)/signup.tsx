@@ -4,7 +4,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -14,10 +13,10 @@ import {
 import { useState } from 'react'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
+import { useTheme } from '../../lib/ThemeContext'
 
 export default function Signup() {
-  const scheme = useColorScheme()
-  const dark = scheme === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const [displayName, setDisplayName] = useState('')

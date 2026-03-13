@@ -1,8 +1,7 @@
 import { Stack } from 'expo-router'
-import { useColorScheme } from 'react-native'
-
+import { useTheme } from '../../../lib/ThemeContext'
 export default function RecordsLayout() {
-  const dark = useColorScheme() === 'dark'
+  const { dark } = useTheme()
   return (
     <Stack
       screenOptions={{

@@ -2,7 +2,6 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
@@ -12,6 +11,7 @@ import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../types/database.types'
+import { useTheme } from '../../../lib/ThemeContext'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 
@@ -20,7 +20,7 @@ interface VehicleWithReminderCount extends Vehicle {
 }
 
 export default function RemindersScreen() {
-  const dark = useColorScheme() === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const [vehicles, setVehicles] = useState<VehicleWithReminderCount[]>([])

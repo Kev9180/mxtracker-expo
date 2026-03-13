@@ -4,7 +4,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
   ScrollView,
   ActivityIndicator,
   Alert,
@@ -17,6 +16,7 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
 import { CardColorPicker } from '../../../components/CardColorPicker'
+import { useTheme } from '../../../lib/ThemeContext'
 
 type EngineConfig = 'inline' | 'v' | 'boxer' | 'rotary' | 'other'
 type DriveType = 'FWD' | 'RWD' | 'AWD' | '4WD'
@@ -256,8 +256,7 @@ function DatePickerModal({ visible, value, onConfirm, onCancel, dark }: {
 }
 
 export default function NewVehicle() {
-  const scheme = useColorScheme()
-  const dark = scheme === 'dark'
+  const { dark } = useTheme()
   const s = styles(dark)
 
   const [form, setForm] = useState<VehicleForm>(EMPTY_FORM)
