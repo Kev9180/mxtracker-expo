@@ -18,6 +18,7 @@ import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../../lib/supabase'
 import { Database } from '../../../../types/database.types'
+import { useProfile } from '../../../../lib/ProfileContext'
 
 type MaintenanceRecord = Database['public']['Tables']['maintenance_records']['Row']
 
@@ -195,6 +196,7 @@ export default function RecordDetail() {
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState<RecordForm | null>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const { profile } = useProfile()
 
   useFocusEffect(
     useCallback(() => {
@@ -338,8 +340,7 @@ export default function RecordDetail() {
         <View style={s.sectionBody}>
           <ReadRow label="TASK" value={record.task_name} dark={dark} />
           <ReadRow label="DATE" value={formatDate(record.completed_date)} dark={dark} />
-          <ReadRow label="MILEAGE" value={record.mileage_at_service != null ? `${record.mileage_at_service.toLocaleString()} mi` : null} dark={dark} />
-          <ReadRow label="PERFORMED BY" value={record.performed_by} dark={dark} />
+          <ReadRow label="MILEAGE AT SERVICE" value={record.mileage_at_service != null ? `${record.mileage_at_service.toLocaleString()} ${profile?.odometer_unit === 'kilometers' ? 'km' : 'mi'}` : null} dark={dark} />          <ReadRow label="PERFORMED BY" value={record.performed_by} dark={dark} />
           <ReadRow label="COST" value={record.cost != null ? `$${parseFloat(String(record.cost)).toFixed(2)}` : null} dark={dark} />
           <ReadRow label="NOTES" value={record.notes} dark={dark} />
         </View>

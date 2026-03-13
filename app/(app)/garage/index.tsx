@@ -17,6 +17,7 @@ import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../types/database.types'
+import { useProfile } from '../../../lib/ProfileContext'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 
@@ -28,6 +29,7 @@ export default function GarageScreen() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const { profile } = useProfile()
 
   async function fetchVehicles() {
     const { data, error } = await supabase
@@ -92,7 +94,9 @@ export default function GarageScreen() {
               {vehicle.current_mileage ? (
                 <View style={s.stat}>
                   <Ionicons name="speedometer-outline" size={12} color={dark ? '#555' : '#aaa'} />
-                  <Text style={s.statText}>{vehicle.current_mileage.toLocaleString()} mi</Text>
+                  <Text style={s.statText}>
+                    {vehicle.current_mileage.toLocaleString()} {profile?.odometer_unit === 'kilometers' ? 'km' : 'mi'}
+                  </Text>
                 </View>
               ) : null}
               {vehicle.fuel_type ? (

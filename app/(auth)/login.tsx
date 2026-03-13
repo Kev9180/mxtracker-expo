@@ -36,6 +36,19 @@ export default function Login() {
     }
   }
 
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      Alert.alert('Enter your email', 'Please enter your email address first, then tap Forgot Password.')
+      return
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim())
+    if (error) {
+      Alert.alert('Error', error.message)
+    } else {
+      Alert.alert('Check your email', `We sent a password reset link to ${email.trim()}.`)
+    }
+  }
+
   return (
     <KeyboardAvoidingView
       style={s.container}
@@ -75,6 +88,12 @@ export default function Login() {
             secureTextEntry
             autoComplete="password"
           />
+
+          <TouchableOpacity onPress={handleForgotPassword} style={{ alignSelf: 'flex-end', marginBottom: 24 }}>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#e3001b', letterSpacing: 1 }}>
+              FORGOT PASSWORD?
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[s.button, loading && s.buttonDisabled]}
