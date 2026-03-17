@@ -39,8 +39,19 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       .single()
 
     if (data) {
-      setProfile(data)
+      // Auto-detect timezone if not set or still on default
+      const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      if (!data.timezone || data.timezone === 'UTC') {
+        await supabase
+          .from('profiles')
+          .update({ timezone: deviceTimezone })
+          .eq('id', user.id)
+        setProfile({ ...data, timezone: deviceTimezone })
+      } else {
+        setProfile(data)
+      }
     } else {
+      const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const { data: newProfile } = await supabase
         .from('profiles')
         .insert({
@@ -49,6 +60,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           reminders_enabled: true,
           remind_days_before: 7,
           odometer_unit: 'miles',
+          timezone: deviceTimezone,
         })
         .select()
         .single()

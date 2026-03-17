@@ -20,9 +20,23 @@ import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../types/database.types'
 import { useProfile } from '../../../lib/ProfileContext'
 import { useTheme } from '../../../lib/ThemeContext'
+import { rawTimeZones } from '@vvo/tzdb'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 type ThemePreference = 'system' | 'light' | 'dark'
+
+// Format timezone for display e.g. "UTC" -> "Phoenix (MST)"
+function formatTimezone(tz: string): string {
+  const found = rawTimeZones.find(t => t.name === tz)
+  if (!found) return tz
+  const offset = found.rawOffsetInMinutes
+  const sign = offset >= 0 ? '+' : '-'
+  const abs = Math.abs(offset)
+  const hours = Math.floor(abs / 60)
+  const minutes = abs % 60
+  const minuteStr = minutes > 0 ? `:${String(minutes).padStart(2, '0')}` : ''
+  return `${found.alternativeName} (UTC ${sign}${hours}${minuteStr})`
+}
 
 // ── Sub-components ─────────────────────────────────────────────
 
@@ -202,6 +216,95 @@ function PickerModal({ visible, title, options, current, onSelect, onCancel, dar
   )
 }
 
+function TimezoneModal({ visible, current, onSelect, onCancel, dark }: {
+  visible: boolean; current: string
+  onSelect: (tz: string) => void; onCancel: () => void; dark: boolean
+}) {
+  const [search, setSearch] = useState('')
+  const s = styles(dark)
+
+  // Full IANA timezone list grouped by region
+  const allTimezones = rawTimeZones.sort((a, b) => a.rawOffsetInMinutes - b.rawOffsetInMinutes)
+
+  const filtered = allTimezones.filter(tz =>
+    tz.name.toLowerCase().replace(/_/g, ' ').includes(search.toLowerCase()) ||
+    tz.alternativeName.toLowerCase().includes(search.toLowerCase())
+  )
+
+  useEffect(() => {
+    if (!visible) setSearch('')
+  }, [visible])
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <TouchableWithoutFeedback onPress={onCancel}>
+          <View style={s.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={[s.modalContainer, { maxHeight: '80%' }]}>
+                <Text style={s.modalTitle}>TIMEZONE</Text>
+                <View style={s.modalAccentBar} />
+                <TextInput
+                  style={[s.modalInput, { marginBottom: 12 }]}
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder="Search timezones..."
+                  placeholderTextColor={dark ? '#444' : '#bbb'}
+                  autoCapitalize="none"
+                />
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  style={{ flexGrow: 0 }}
+                >
+                  {filtered.map(tz => {
+                    const offset = tz.rawOffsetInMinutes
+                    const sign = offset >= 0 ? '+' : '-'
+                    const abs = Math.abs(offset)
+                    const hours = Math.floor(abs / 60)
+                    const minutes = abs % 60
+                    const minuteStr = minutes > 0 ? `:${String(minutes).padStart(2, '0')}` : ''
+                    const label = `${tz.alternativeName} (UTC ${sign}${hours}${minuteStr})`
+
+                    return (
+                      <TouchableOpacity
+                        key={tz.name}
+                        style={[s.pickerOption, current === tz.name && s.pickerOptionActive]}
+                        onPress={() => onSelect(tz.name)}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text style={[s.pickerOptionLabel, current === tz.name && s.pickerOptionLabelActive]}>
+                            {label}
+                          </Text>
+                          <Text style={s.pickerOptionSubtitle}>
+                            {tz.name.replace(/_/g, ' ')}
+                          </Text>
+                        </View>
+                        {current === tz.name && (
+                          <Ionicons name="checkmark" size={20} color="#e3001b" />
+                        )}
+                      </TouchableOpacity>
+                    )
+                  })}
+                </ScrollView>
+                <TouchableOpacity
+                  style={[s.modalCancelButton, { marginTop: 12 }]}
+                  onPress={onCancel}
+                >
+                  <Text style={s.modalCancelText}>CANCEL</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </Modal>
+  )
+}
+
 // ── Main Component ─────────────────────────────────────────────
 
 export default function SettingsScreen() {
@@ -223,6 +326,9 @@ export default function SettingsScreen() {
 
   const [showThemeModal, setShowThemeModal] = useState(false)
   const [showUnitModal, setShowUnitModal] = useState(false)
+
+  const [showTimezoneModal, setShowTimezoneModal] = useState(false)
+  const [timezoneSearch, setTimezoneSearch] = useState('')
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -343,6 +449,13 @@ export default function SettingsScreen() {
         onCancel={() => setShowUnitModal(false)}
         dark={dark}
       />
+      <TimezoneModal
+        visible={showTimezoneModal}
+        current={profile?.timezone ?? 'UTC'}
+        onSelect={(tz) => { saveField('timezone', tz); setShowTimezoneModal(false) }}
+        onCancel={() => setShowTimezoneModal(false)}
+        dark={dark}
+      />
 
       {/* Header */}
       <View style={s.header}>
@@ -362,6 +475,12 @@ export default function SettingsScreen() {
             onPress={() => openEdit('display_name', 'Display Name', displayName, {
               placeholder: 'Your name'
             })}
+            dark={dark}
+          />
+          <SettingRow
+            label="Timezone"
+            subtitle={formatTimezone(profile?.timezone ?? 'UTC')}
+            onPress={() => setShowTimezoneModal(true)}
             dark={dark}
           />
           <SettingRow

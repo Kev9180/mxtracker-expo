@@ -135,6 +135,7 @@ export type Database = {
           remind_days_before: number
           reminder_email: string | null
           reminders_enabled: boolean
+          timezone: string
           updated_at: string
         }
         Insert: {
@@ -145,6 +146,7 @@ export type Database = {
           remind_days_before?: number
           reminder_email?: string | null
           reminders_enabled?: boolean
+          timezone?: string
           updated_at?: string
         }
         Update: {
@@ -155,6 +157,7 @@ export type Database = {
           remind_days_before?: number
           reminder_email?: string | null
           reminders_enabled?: boolean
+          timezone?: string
           updated_at?: string
         }
         Relationships: []
@@ -202,6 +205,7 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          card_color: string | null
           color: string | null
           created_at: string
           current_mileage: number | null
@@ -224,9 +228,9 @@ export type Database = {
           user_id: string
           vin: string | null
           year: number
-          card_color: string | null
         }
         Insert: {
+          card_color?: string | null
           color?: string | null
           created_at?: string
           current_mileage?: number | null
@@ -249,9 +253,9 @@ export type Database = {
           user_id: string
           vin?: string | null
           year: number
-          card_color: string | null
         }
         Update: {
+          card_color?: string | null
           color?: string | null
           created_at?: string
           current_mileage?: number | null
@@ -274,7 +278,6 @@ export type Database = {
           user_id?: string
           vin?: string | null
           year?: number
-          card_color: string | null
         }
         Relationships: []
       }
