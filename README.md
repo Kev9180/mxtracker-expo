@@ -35,4 +35,4 @@ Two Supabase Edge Functions handle the reminder system:
 
 ## License
 
-MIT
+Apache License 2.0
