@@ -30,8 +30,10 @@ A cross-platform mobile app for tracking vehicle maintenance and receiving email
 Two Supabase Edge Functions handle the reminder system:
 
 **`send-reminders`** — Runs daily via pg_cron. Queries all maintenance records with reminders enabled that are due within the user's reminder window or overdue. Sends emails via Resend using the user's local timezone for date calculations.
+- To deploy: `npx supabase functions deploy send-reminders`
 
 **`handle-reminder-action`** — Handles button clicks from reminder emails. Supports snooze for 1 week, snooze for 1 month, and stop reminders for a specific task. Protected with HMAC token verification.
+- To deploy: `npx supabase functions deploy handle-reminder-action --no-verify-jwt`
 
 ## License
 
