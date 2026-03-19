@@ -215,8 +215,6 @@ export type Database = {
           engine_displacement: number | null
           fuel_type: string | null
           id: string
-          license_plate: string | null
-          license_plate_state: string | null
           make: string
           model: string
           nickname: string | null
@@ -240,8 +238,6 @@ export type Database = {
           engine_displacement?: number | null
           fuel_type?: string | null
           id?: string
-          license_plate?: string | null
-          license_plate_state?: string | null
           make: string
           model: string
           nickname?: string | null
@@ -265,8 +261,6 @@ export type Database = {
           engine_displacement?: number | null
           fuel_type?: string | null
           id?: string
-          license_plate?: string | null
-          license_plate_state?: string | null
           make?: string
           model?: string
           nickname?: string | null

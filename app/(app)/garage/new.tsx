@@ -40,8 +40,6 @@ interface VehicleForm {
   transmission: TransmissionType | ''
   fuel_type: FuelType | ''
   purchase_date: string
-  license_plate: string
-  license_plate_state: string
 }
 
 const EMPTY_FORM: VehicleForm = {
@@ -49,7 +47,7 @@ const EMPTY_FORM: VehicleForm = {
   color: '', card_color: '', vin: '', current_mileage: '',
   engine_displacement: '', engine_config: '', cylinders: '',
   drive: '', transmission: '',
-  fuel_type: '', purchase_date: '', license_plate: '', license_plate_state: '',
+  fuel_type: '', purchase_date: '',
 }
 
 const ENGINE_CONFIGS: { label: string; value: EngineConfig }[] = [
@@ -326,8 +324,6 @@ export default function NewVehicle() {
       transmission: form.transmission || null,
       fuel_type: form.fuel_type || null,
       purchase_date: form.purchase_date || null,
-      license_plate: form.license_plate.trim() || null,
-      license_plate_state: form.license_plate_state.trim() || null,
     })
 
     setLoading(false)
@@ -340,7 +336,7 @@ export default function NewVehicle() {
 
   const engineCount = [form.engine_displacement, form.engine_config, form.cylinders].filter(Boolean).length
   const drivetrainCount = [form.drive, form.transmission].filter(Boolean).length
-  const otherCount = [form.fuel_type, form.purchase_date, form.license_plate, form.license_plate_state].filter(Boolean).length
+  const otherCount = [form.fuel_type, form.purchase_date].filter(Boolean).length
 
   return (
     <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -417,8 +413,6 @@ export default function NewVehicle() {
                   <Ionicons name="calendar-outline" size={16} color={dark ? '#555' : '#aaa'} />
                 </TouchableOpacity>
               </View>
-              <Field label="LICENSE PLATE" value={form.license_plate} onChangeText={v => set('license_plate', v.toUpperCase())} placeholder="e.g. ABC1234" autoCapitalize="characters" dark={dark} />
-              <Field label="STATE / REGION" value={form.license_plate_state} onChangeText={v => set('license_plate_state', v.toUpperCase())} placeholder="e.g. CA" autoCapitalize="characters" maxLength={3} dark={dark} />
             </View>
           )}
         </View>

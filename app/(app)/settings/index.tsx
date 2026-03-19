@@ -548,7 +548,7 @@ export default function SettingsScreen() {
           <SettingRow
             label="Send Feedback"
             subtitle="Report a bug or suggest a feature"
-            onPress={() => Linking.openURL('mailto:feedback@mxtracker.app?subject=MXTracker Feedback')}
+            onPress={() => Linking.openURL('mailto:developer@mxtracker.app?subject=MXTracker Feedback')}
             dark={dark}
             last
           />

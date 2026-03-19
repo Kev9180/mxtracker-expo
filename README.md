@@ -1,5 +1,8 @@
 # MXTracker
 
+© 2026 Kevin Johnston  
+Licensed under the Apache License 2.0 — see [LICENSE](LICENSE) for details.
+
 A cross-platform mobile app for tracking vehicle maintenance and receiving email reminders when service is due. Available on iOS, Android, and web.
 
 ## Features

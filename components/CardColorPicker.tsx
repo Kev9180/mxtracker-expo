@@ -3,39 +3,28 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../lib/ThemeContext'
 
 export const CARD_COLORS = [
-  // Whites & silvers
+  // Neutrals
   { label: 'White', value: '#F5F5F5' },
-  { label: 'Pearl', value: '#EAE6DA' },
-  { label: 'Silver', value: '#A8A9AD' },
-  { label: 'Gunmetal', value: '#6E7B8B' },
-  // Blacks & grays
-  { label: 'Charcoal', value: '#4A4A4A' },
   { label: 'Black', value: '#1A1A1A' },
-  // Reds
+  { label: 'Silver', value: '#A8A9AD' },
+  { label: 'Charcoal', value: '#4A4A4A' },
+  { label: 'Gray', value: '#808080' },
+  // Warm colors
   { label: 'Red', value: '#CC0000' },
-  { label: 'Burgundy', value: '#800020' },
-  { label: 'Maroon', value: '#5C0A0A' },
-  // Blues
-  { label: 'Sky Blue', value: '#4A90D9' },
-  { label: 'Blue', value: '#1A4FA0' },
-  { label: 'Navy', value: '#0A1F5C' },
-  { label: 'Teal', value: '#007B7B' },
-  // Greens
-  { label: 'Green', value: '#2E7D32' },
-  { label: 'Olive', value: '#6B6B00' },
-  { label: 'Army', value: '#4A5240' },
-  // Yellows & oranges
-  { label: 'Yellow', value: '#F9C800' },
-  { label: 'Gold', value: '#C8960C' },
   { label: 'Orange', value: '#E65100' },
-  // Browns & tans
-  { label: 'Brown', value: '#5D4037' },
+  { label: 'Yellow', value: '#F9C800' },
+  // Greens
+  { label: 'Light Green', value: '#7FBB3B' },
+  { label: 'Dark Green', value: '#2E7D32' },
+  // Blues
+  { label: 'Light Blue', value: '#4A90D9' },
+  { label: 'Navy', value: '#0A1F5C' },
+  // Purple
+  { label: 'Purple', value: '#9C27B0' },
+  // Earth tones & luxury
+  { label: 'Champagne', value: '#F5E6D3' },
   { label: 'Tan', value: '#C4A882' },
-  // Purples & pinks
-  { label: 'Purple', value: '#6A1B9A' },
-  { label: 'Pink', value: '#D44C8A' },
-  // Special
-  { label: 'Bronze', value: '#9C6B30' },
+  { label: 'Pearl', value: '#EAE6DA' },
 ]
 
 interface Props {
@@ -73,11 +62,6 @@ export function CardColorPicker({ value, onChange, disabled }: Props) {
           )
         })}
       </View>
-      {value && (
-        <Text style={s.selectedLabel}>
-          {CARD_COLORS.find(c => c.value === value)?.label ?? value}
-        </Text>
-      )}
     </View>
   )
 }
@@ -115,12 +99,6 @@ const styles = (dark: boolean) => StyleSheet.create({
   swatchSelected: {
     borderWidth: 2.5,
     borderColor: dark ? '#fff' : '#111',
-  },
-  selectedLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-    color: dark ? '#888' : '#666',
   },
   swatchDisabled: {
     opacity: 0.35,

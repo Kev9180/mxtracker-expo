@@ -42,14 +42,16 @@ interface VehicleForm {
   transmission: TransmissionType | ''
   fuel_type: FuelType | ''
   purchase_date: string
-  license_plate: string
-  license_plate_state: string
 }
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
+
+function capitalizeFirst(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1).replace('-', ' ')
+}
 
 const ENGINE_CONFIGS: { label: string; value: EngineConfig }[] = [
   { label: 'Inline', value: 'inline' }, { label: 'V', value: 'v' },
@@ -88,8 +90,6 @@ function vehicleToForm(v: Vehicle): VehicleForm {
     transmission: (v.transmission as TransmissionType) ?? '',
     fuel_type: (v.fuel_type as FuelType) ?? '',
     purchase_date: v.purchase_date ?? '',
-    license_plate: v.license_plate ?? '',
-    license_plate_state: v.license_plate_state ?? '',
   }
 }
 
@@ -332,8 +332,6 @@ export default function VehicleDetail() {
         transmission: form.transmission || null,
         fuel_type: form.fuel_type || null,
         purchase_date: form.purchase_date || null,
-        license_plate: form.license_plate.trim() || null,
-        license_plate_state: form.license_plate_state.trim() || null,
       })
       .eq('id', vehicle.id)
 
@@ -411,8 +409,8 @@ export default function VehicleDetail() {
       {/* Engine — only show if any value exists */}
       {(vehicle.engine_displacement || vehicle.engine_config || vehicle.cylinders) ? (
         <SectionCard title="ENGINE" dark={dark}>
-          <ReadRow label="DISPLACEMENT" value={vehicle.engine_displacement != null ? `${vehicle.engine_displacement}L` : null} dark={dark} />
-          <ReadRow label="CONFIGURATION" value={vehicle.engine_config} dark={dark} />
+          <ReadRow label="DISPLACEMENT" value={vehicle.engine_displacement != null ? `${Number(vehicle.engine_displacement).toFixed(1)} L` : null} dark={dark} />
+          <ReadRow label="CONFIGURATION" value={vehicle.engine_config ? vehicle.engine_config.toUpperCase() : null} dark={dark} />
           <ReadRow label="CYLINDERS" value={vehicle.cylinders != null ? String(vehicle.cylinders) : null} dark={dark} />
         </SectionCard>
       ) : null}
@@ -421,14 +419,14 @@ export default function VehicleDetail() {
       {(vehicle.drive || vehicle.transmission) ? (
         <SectionCard title="DRIVETRAIN" dark={dark}>
           <ReadRow label="DRIVE" value={vehicle.drive} dark={dark} />
-          <ReadRow label="TRANSMISSION" value={vehicle.transmission} dark={dark} />
+          <ReadRow label="TRANSMISSION" value={vehicle.transmission ? capitalizeFirst(vehicle.transmission) : null} dark={dark} />
         </SectionCard>
       ) : null}
 
       {/* Other */}
-      {(vehicle.fuel_type || vehicle.purchase_date || vehicle.license_plate || vehicle.license_plate_state) ? (
+      {(vehicle.fuel_type || vehicle.purchase_date) ? (
         <SectionCard title="OTHER" dark={dark}>
-          <ReadRow label="FUEL TYPE" value={vehicle.fuel_type} dark={dark} />
+          <ReadRow label="FUEL TYPE" value={vehicle.fuel_type ? capitalizeFirst(vehicle.fuel_type) : null} dark={dark} />
           <ReadRow
             label="PURCHASE DATE"
             value={vehicle.purchase_date ? (() => {
@@ -437,8 +435,6 @@ export default function VehicleDetail() {
             })() : null}
             dark={dark}
           />
-          <ReadRow label="LICENSE PLATE" value={vehicle.license_plate} dark={dark} />
-          <ReadRow label="STATE" value={vehicle.license_plate_state} dark={dark} />
         </SectionCard>
       ) : null}
 
@@ -509,8 +505,6 @@ export default function VehicleDetail() {
               <Ionicons name="calendar-outline" size={16} color={dark ? '#555' : '#aaa'} />
             </TouchableOpacity>
           </View>
-          <EditField label="LICENSE PLATE" value={form.license_plate} onChangeText={v => setField('license_plate', v.toUpperCase())} placeholder="e.g. ABC1234" autoCapitalize="characters" dark={dark} />
-          <EditField label="STATE / REGION" value={form.license_plate_state} onChangeText={v => setField('license_plate_state', v.toUpperCase())} placeholder="e.g. CA" autoCapitalize="characters" maxLength={3} dark={dark} />
         </SectionCard>
 
         {/* Save */}
