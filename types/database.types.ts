@@ -39,6 +39,82 @@ export type Database = {
   }
   public: {
     Tables: {
+      maintenance_record_audit: {
+        Row: {
+          id: string
+          maintenance_record_id: string
+          user_id: string
+          change_type: string
+          changed_fields: string[] | null
+          old_values: Json | null
+          new_values: Json | null
+          changed_at: string
+        }
+        Insert: {
+          id?: string
+          maintenance_record_id: string
+          user_id: string
+          change_type: string
+          changed_fields?: string[] | null
+          old_values?: Json | null
+          new_values?: Json | null
+          changed_at?: string
+        }
+        Update: {
+          id?: string
+          maintenance_record_id?: string
+          user_id?: string
+          change_type?: string
+          changed_fields?: string[] | null
+          old_values?: Json | null
+          new_values?: Json | null
+          changed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_record_audit_maintenance_record_id_fkey"
+            columns: ["maintenance_record_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      record_exports: {
+        Row: {
+          id: string
+          vehicle_id: string
+          user_id: string
+          record_count: number
+          export_hash: string
+          exported_at: string
+        }
+        Insert: {
+          id?: string
+          vehicle_id: string
+          user_id: string
+          record_count: number
+          export_hash: string
+          exported_at?: string
+        }
+        Update: {
+          id?: string
+          vehicle_id?: string
+          user_id?: string
+          record_count?: number
+          export_hash?: string
+          exported_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "record_exports_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_records: {
         Row: {
           completed_date: string | null
@@ -57,7 +133,6 @@ export type Database = {
           receipt_url: string | null
           reminder_enabled: boolean
           reminder_sent_at: string | null
-          status: string
           task_name: string
           updated_at: string
           user_id: string
@@ -80,7 +155,6 @@ export type Database = {
           receipt_url?: string | null
           reminder_enabled?: boolean
           reminder_sent_at?: string | null
-          status?: string
           task_name: string
           updated_at?: string
           user_id: string
@@ -103,7 +177,6 @@ export type Database = {
           receipt_url?: string | null
           reminder_enabled?: boolean
           reminder_sent_at?: string | null
-          status?: string
           task_name?: string
           updated_at?: string
           user_id?: string

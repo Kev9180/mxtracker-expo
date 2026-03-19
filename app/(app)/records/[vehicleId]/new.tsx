@@ -199,7 +199,6 @@ export default function NewRecord() {
       vehicle_id: vehicleId,
       user_id: user.id,
       task_name: taskName.trim(),
-      status: 'completed',
       completed_date: completedDate,
       mileage_at_service: mileage ? parseInt(mileage) : null,
       performed_by: performedBy.trim() || null,
