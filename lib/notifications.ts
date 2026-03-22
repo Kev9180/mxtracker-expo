@@ -15,10 +15,11 @@ Notifications.setNotificationHandler({
 
 /**
  * Requests permission and returns the Expo push token, or null if unavailable
- * (simulator, permission denied, etc.).
+ * (simulator, permission denied, web, etc.).
  */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
-  // Push notifications only work on real devices
+  // Push notifications only work on native mobile platforms
+  if (Platform.OS === 'web') return null
   if (!Device.isDevice) return null
 
   if (Platform.OS === 'android') {
@@ -39,8 +40,13 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
   if (finalStatus !== 'granted') return null
 
-  const tokenData = await Notifications.getExpoPushTokenAsync({
-    projectId: '91f9bfd6-1623-4764-92b5-0535787c1538',
-  })
-  return tokenData.data
+  try {
+    const tokenData = await Notifications.getExpoPushTokenAsync({
+      projectId: '91f9bfd6-1623-4764-92b5-0535787c1538',
+    })
+    return tokenData.data
+  } catch (error) {
+    console.warn('Failed to get push token:', error)
+    return null
+  }
 }

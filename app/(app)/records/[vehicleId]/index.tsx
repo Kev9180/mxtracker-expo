@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Alert
+  Alert,
+  Platform
 } from 'react-native'
 import { useState, useCallback } from 'react'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
@@ -160,22 +161,18 @@ export default function VehicleRecordsScreen() {
 
   async function exportRecords() {
     if (!vehicle) return
+    const v = vehicle
     const allRecords = sections.flatMap(s => s.data)
     if (allRecords.length === 0) {
       Alert.alert('No Records', 'Add some maintenance records before exporting.')
       return
     }
 
-    Alert.alert(
-      'Export Maintenance Records',
-      `This will generate a PDF report for your ${vehicle.year} ${vehicle.make} ${vehicle.model} containing ${allRecords.length} record${allRecords.length === 1 ? '' : 's'}.\n\nNote: This is a self-reported record. VIN and service data have not been independently verified.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Export PDF',
-          onPress: async () => {
-            setExporting(true)
-            try {
+    const confirmMessage = `This will generate a PDF report for your ${v.year} ${v.make} ${v.model} containing ${allRecords.length} record${allRecords.length === 1 ? '' : 's'}.\n\nNote: This is a self-reported record. VIN and service data have not been independently verified.`
+
+    async function doExport() {
+      setExporting(true)
+      try {
               // Fetch audit logs for all records in one query
               const recordIds = allRecords.map(r => r.id)
               const { data: auditLogs } = await supabase
@@ -212,7 +209,7 @@ export default function VehicleRecordsScreen() {
               const { data: exportRow } = await supabase
                 .from('record_exports')
                 .insert({
-                  vehicle_id: vehicle.id,
+                  vehicle_id: v.id,
                   user_id: (await supabase.auth.getUser()).data.user!.id,
                   record_count: allRecords.length,
                   export_hash: exportHash,
@@ -227,8 +224,8 @@ export default function VehicleRecordsScreen() {
               })
               const odometerUnit = profile?.odometer_unit === 'kilometers' ? 'km' : 'mi'
               const exportedBy = profile?.display_name || 'Unknown'
-              const vehicleName = `${vehicle.year} ${vehicle.make} ${vehicle.model}${vehicle.trim ? ' ' + vehicle.trim : ''}`
-              const vehicleNickname = vehicle.nickname ? ` "${vehicle.nickname}"` : ''
+              const vehicleName = `${v.year} ${v.make} ${v.model}${v.trim ? ' ' + v.trim : ''}`
+              const vehicleNickname = v.nickname ? ` "${v.nickname}"` : ''
 
               // Build mileage progression analysis
               const mileageRecords = sorted.filter(r => r.mileage_at_service != null && r.completed_date != null)
@@ -358,7 +355,7 @@ export default function VehicleRecordsScreen() {
     <div class="meta-field"><label>EXPORTED BY</label><span>${exportedBy}</span></div>
     <div class="meta-field"><label>EXPORT DATE</label><span>${exportedAt}</span></div>
     <div class="meta-field"><label>TOTAL RECORDS</label><span>${allRecords.length}</span></div>
-    ${vehicle.vin ? `<div class="meta-field"><label>VIN</label><span>${vehicle.vin}</span></div>` : ''}
+    ${v.vin ? `<div class="meta-field"><label>VIN</label><span>${v.vin}</span></div>` : ''}
   </div>
 
   <div class="disclaimer">
@@ -388,26 +385,43 @@ export default function VehicleRecordsScreen() {
 </body>
 </html>`
 
-              const { uri: tmpUri } = await Print.printToFileAsync({ html, base64: false })
-              // Rename to a human-readable filename before sharing
-              const safeFilename = `${vehicle.year}_${vehicle.make}_${vehicle.model}_mxlog`
-                .replace(/\s+/g, '_')
-                .replace(/[^a-zA-Z0-9_-]/g, '') + '.pdf'
-              const pdfFile = new FileSystem.File(tmpUri)
-              // Remove any pre-existing file with the same name so rename() won't conflict
-              const destUri = tmpUri.replace(/[^/]+$/, safeFilename)
-              const existing = new FileSystem.File(destUri)
-              if (existing.exists) existing.delete()
-              pdfFile.rename(safeFilename)
-              const canShare = await Sharing.isAvailableAsync()
-              if (canShare) {
-                await Sharing.shareAsync(pdfFile.uri, {
-                  mimeType: 'application/pdf',
-                  dialogTitle: `${vehicleName} Maintenance Report`,
-                  UTI: 'com.adobe.pdf',
-                })
+              // Platform-aware PDF handling
+              if (Platform.OS === 'web') {
+                // Web: open report in new tab and trigger browser print dialog (Save as PDF)
+                const printWindow = window.open('about:blank', '_blank')
+                if (!printWindow) {
+                  Alert.alert('Popup Blocked', 'Please allow popups for this site and try again.')
+                } else {
+                  printWindow.document.write(html)
+                  printWindow.document.close()
+                  printWindow.onload = () => {
+                    printWindow.focus()
+                    printWindow.print()
+                  }
+                }
               } else {
-                Alert.alert('Exported', `PDF saved to: ${pdfFile.uri}`)
+                // Mobile: use expo-print and expo-sharing
+                const { uri: tmpUri } = await Print.printToFileAsync({ html, base64: false })
+                // Rename to a human-readable filename before sharing
+                const safeFilename = `${v.year}_${v.make}_${v.model}_mxlog`
+                  .replace(/\s+/g, '_')
+                  .replace(/[^a-zA-Z0-9_-]/g, '') + '.pdf'
+                const pdfFile = new FileSystem.File(tmpUri)
+                // Remove any pre-existing file with the same name so rename() won't conflict
+                const destUri = tmpUri.replace(/[^/]+$/, safeFilename)
+                const existing = new FileSystem.File(destUri)
+                if (existing.exists) existing.delete()
+                pdfFile.rename(safeFilename)
+                const canShare = await Sharing.isAvailableAsync()
+                if (canShare) {
+                  await Sharing.shareAsync(pdfFile.uri, {
+                    mimeType: 'application/pdf',
+                    dialogTitle: `${vehicleName} Maintenance Report`,
+                    UTI: 'com.adobe.pdf',
+                  })
+                } else {
+                  Alert.alert('Exported', `PDF saved to: ${pdfFile.uri}`)
+                }
               }
             } catch (err) {
               console.error('Export error:', err)
@@ -415,10 +429,22 @@ export default function VehicleRecordsScreen() {
             } finally {
               setExporting(false)
             }
-          }
-        }
-      ]
-    )
+    }
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(confirmMessage)) {
+        await doExport()
+      }
+    } else {
+      Alert.alert(
+        'Export Maintenance Records',
+        confirmMessage,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Export PDF', onPress: doExport },
+        ]
+      )
+    }
   }
 
   function formatDateLong(dateStr: string | null | undefined): string {

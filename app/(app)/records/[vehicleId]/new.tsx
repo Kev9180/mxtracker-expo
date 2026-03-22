@@ -283,7 +283,7 @@ export default function NewRecord() {
 
       {/* Header */}
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backButton}>
+        <TouchableOpacity onPress={() => router.push(`/(app)/records/${vehicleId}`)} style={s.backButton}>
           <Ionicons name="arrow-back" size={24} color={dark ? '#fff' : '#111'} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>{fromReminderId ? 'LOG SERVICE' : 'ADD RECORD'}</Text>
@@ -300,7 +300,7 @@ export default function NewRecord() {
         {/* Prefilled from reminder banner */}
         {fromReminderId && (
           <View style={s.reminderBanner}>
-            <Ionicons name="checkmark-circle-outline" size={16} color="#e3001b" />
+            <Ionicons name="checkmark-circle-outline" size={16} color="#22c55e" />
             <Text style={s.reminderBannerText}>
               Logging completion of reminder — task and date are pre-filled.
             </Text>
@@ -583,11 +583,11 @@ const styles = (dark: boolean) => StyleSheet.create({
   // Reminder completion banner
   reminderBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: dark ? '#1a0a0a' : '#fff5f5',
-    borderWidth: 1, borderColor: '#e3001b30',
+    backgroundColor: dark ? '#0a1a0a' : '#f0fdf4',
+    borderWidth: 1, borderColor: '#22c55e30',
     padding: 14, marginBottom: 8,
   },
   reminderBannerText: {
-    flex: 1, fontSize: 12, color: dark ? '#cc4444' : '#c0392b', lineHeight: 17,
+    flex: 1, fontSize: 12, color: dark ? '#22c55e' : '#15803d', lineHeight: 17,
   },
 })

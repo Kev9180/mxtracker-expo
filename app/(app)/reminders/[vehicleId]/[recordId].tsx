@@ -1,11 +1,16 @@
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Modal,
+  Switch,
 } from 'react-native'
 import { useCallback, useState } from 'react'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
@@ -15,21 +20,23 @@ import { Database } from '../../../../types/database.types'
 import { useTheme } from '../../../../lib/ThemeContext'
 
 type MaintenanceRecord = Database['public']['Tables']['maintenance_records']['Row']
-type Vehicle = Database['public']['Tables']['vehicles']['Row']
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+]
 
 function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return 'No date set'
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  if (!dateStr) return '—'
   const [y, m, d] = dateStr.split('-')
-  return `${months[parseInt(m) - 1]} ${parseInt(d)}, ${y}`
+  return `${MONTHS[parseInt(m) - 1]} ${parseInt(d)}, ${y}`
 }
 
 function formatInterval(years: number | null, months: number | null, days: number | null): string {
   const parts = []
-  if (years) parts.push(`${years} yr`)
-  if (months) parts.push(`${months} mo`)
-  if (days) parts.push(`${days} d`)
+  if (years) parts.push(`${years}y`)
+  if (months) parts.push(`${months}mo`)
+  if (days) parts.push(`${days}d`)
   return parts.length > 0 ? parts.join(' ') : '—'
 }
 
@@ -46,30 +53,228 @@ function daysUntil(dateStr: string | null | undefined): number | null {
   return Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 }
 
+interface ReminderForm {
+  task_name: string
+  next_due_date: string
+  interval_years: string
+  interval_months: string
+  interval_days: string
+}
+
+function recordToForm(r: MaintenanceRecord): ReminderForm {
+  return {
+    task_name: r.task_name,
+    next_due_date: r.next_due_date ?? '',
+    interval_years: r.interval_years != null ? String(r.interval_years) : '',
+    interval_months: r.interval_months != null ? String(r.interval_months) : '',
+    interval_days: r.interval_days != null ? String(r.interval_days) : '',
+  }
+}
+
+// ── Sub-components ─────────────────────────────────────────────
+
+function ReadRow({ label, value, dark }: { label: string; value: string | null | undefined; dark: boolean }) {
+  if (!value) return null
+  const s = styles(dark)
+  return (
+    <View style={s.readRow}>
+      <Text style={s.readLabel}>{label}</Text>
+      <Text style={s.readValue}>{value}</Text>
+    </View>
+  )
+}
+
+function EditField({ label, value, onChangeText, placeholder, keyboardType, maxLength, dark }: {
+  label: string; value: string; onChangeText: (v: string) => void
+  placeholder?: string; keyboardType?: 'default' | 'numeric'
+  maxLength?: number; dark: boolean
+}) {
+  const s = styles(dark)
+  return (
+    <View style={s.fieldContainer}>
+      <Text style={s.fieldLabel}>{label}</Text>
+      <TextInput
+        style={s.input}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={dark ? '#444' : '#bbb'}
+        keyboardType={keyboardType ?? 'default'}
+        maxLength={maxLength}
+      />
+    </View>
+  )
+}
+
+function DatePickerModal({ visible, value, onConfirm, onCancel, dark }: {
+  visible: boolean; value: string; onConfirm: (date: string) => void
+  onCancel: () => void; dark: boolean
+}) {
+  const s = styles(dark)
+  const now = new Date()
+  const parsed = value ? new Date(value + 'T12:00:00') : now
+  const [month, setMonth] = useState(parsed.getMonth())
+  const [day, setDay] = useState(parsed.getDate())
+  const [year, setYear] = useState(parsed.getFullYear())
+
+  const currentYear = now.getFullYear()
+  const years = Array.from({ length: currentYear - 1885 + 1 }, (_, i) => currentYear - i)
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+  const clampedDay = Math.min(day, daysInMonth)
+
+  function handleConfirm() {
+    const mm = String(month + 1).padStart(2, '0')
+    const dd = String(clampedDay).padStart(2, '0')
+    onConfirm(`${year}-${mm}-${dd}`)
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={s.modalOverlay}>
+        <View style={s.modalContainer}>
+          <Text style={s.modalTitle}>DUE DATE</Text>
+          <View style={s.accentBarSmall} />
+          <View style={s.pickerRow}>
+            <View style={s.pickerColumn}>
+              <Text style={s.pickerLabel}>MONTH</Text>
+              <ScrollView style={s.pickerScroll} showsVerticalScrollIndicator={false}>
+                {MONTHS.map((m, i) => (
+                  <TouchableOpacity key={m} style={[s.pickerItem, month === i && s.pickerItemActive]} onPress={() => setMonth(i)}>
+                    <Text style={[s.pickerItemText, month === i && s.pickerItemTextActive]}>{m.slice(0, 3).toUpperCase()}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={s.pickerColumnSmall}>
+              <Text style={s.pickerLabel}>DAY</Text>
+              <ScrollView style={s.pickerScroll} showsVerticalScrollIndicator={false}>
+                {days.map(d => (
+                  <TouchableOpacity key={d} style={[s.pickerItem, clampedDay === d && s.pickerItemActive]} onPress={() => setDay(d)}>
+                    <Text style={[s.pickerItemText, clampedDay === d && s.pickerItemTextActive]}>{d}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <View style={s.pickerColumnSmall}>
+              <Text style={s.pickerLabel}>YEAR</Text>
+              <ScrollView style={s.pickerScroll} showsVerticalScrollIndicator={false}>
+                {years.map(y => (
+                  <TouchableOpacity key={y} style={[s.pickerItem, year === y && s.pickerItemActive]} onPress={() => setYear(y)}>
+                    <Text style={[s.pickerItemText, year === y && s.pickerItemTextActive]}>{y}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+          <View style={s.modalButtons}>
+            <TouchableOpacity style={s.modalCancelButton} onPress={onCancel}>
+              <Text style={s.modalCancelText}>CANCEL</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.modalConfirmButton} onPress={handleConfirm}>
+              <Text style={s.modalConfirmText}>CONFIRM</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+// ── Main Component ─────────────────────────────────────────────
+
 export default function ReminderDetailScreen() {
   const { vehicleId, recordId } = useLocalSearchParams<{ vehicleId: string; recordId: string }>()
   const { dark } = useTheme()
   const s = styles(dark)
 
   const [record, setRecord] = useState<MaintenanceRecord | null>(null)
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState<ReminderForm | null>(null)
+  const [showDatePicker, setShowDatePicker] = useState(false)
 
   useFocusEffect(
     useCallback(() => {
-      fetchData()
+      fetchRecord()
     }, [recordId, vehicleId])
   )
 
-  async function fetchData() {
+  async function fetchRecord() {
     setLoading(true)
-    const [recordRes, vehicleRes] = await Promise.all([
-      supabase.from('maintenance_records').select('*').eq('id', recordId).single(),
-      supabase.from('vehicles').select('*').eq('id', vehicleId).single(),
-    ])
-    if (recordRes.data) setRecord(recordRes.data)
-    if (vehicleRes.data) setVehicle(vehicleRes.data)
+    const { data, error } = await supabase
+      .from('maintenance_records')
+      .select('*')
+      .eq('id', recordId)
+      .single()
+    if (!error && data) {
+      setRecord(data)
+      setForm(recordToForm(data))
+    }
     setLoading(false)
+  }
+
+  function setField(field: keyof ReminderForm, value: string) {
+    setForm(prev => prev ? { ...prev, [field]: value } : prev)
+  }
+
+  function handleEditPress() {
+    if (editing) {
+      if (record) setForm(recordToForm(record))
+      setEditing(false)
+    } else {
+      setEditing(true)
+    }
+  }
+
+  function getNextDuePreview(f: ReminderForm): string | null {
+    if (!f.next_due_date) return null
+    const y = parseInt(f.interval_years) || 0
+    const m = parseInt(f.interval_months) || 0
+    const d = parseInt(f.interval_days) || 0
+    if (y === 0 && m === 0 && d === 0) return null
+    const date = new Date(f.next_due_date + 'T12:00:00')
+    date.setFullYear(date.getFullYear() + y)
+    date.setMonth(date.getMonth() + m)
+    date.setDate(date.getDate() + d)
+    return formatDate(date.toISOString().split('T')[0])
+  }
+
+  async function handleSave() {
+    if (!form || !record) return
+    if (!form.task_name.trim()) {
+      Alert.alert('Missing field', 'Task name is required.')
+      return
+    }
+    const y = parseInt(form.interval_years) || 0
+    const m = parseInt(form.interval_months) || 0
+    const d = parseInt(form.interval_days) || 0
+    if (y === 0 && m === 0 && d === 0) {
+      Alert.alert('Missing interval', 'Please set a reminder interval.')
+      return
+    }
+
+    setSaving(true)
+    const { error } = await supabase
+      .from('maintenance_records')
+      .update({
+        task_name: form.task_name.trim(),
+        next_due_date: form.next_due_date || null,
+        interval_years: form.interval_years ? parseInt(form.interval_years) : null,
+        interval_months: form.interval_months ? parseInt(form.interval_months) : null,
+        interval_days: form.interval_days ? parseInt(form.interval_days) : null,
+      })
+      .eq('id', record.id)
+
+    setSaving(false)
+    if (error) {
+      Alert.alert('Error', error.message)
+      return
+    }
+
+    await fetchRecord()
+    setEditing(false)
   }
 
   function handleMarkComplete() {
@@ -90,7 +295,7 @@ export default function ReminderDetailScreen() {
     })
   }
 
-  if (loading) {
+  if (loading || !record || !form) {
     return (
       <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator color="#e3001b" />
@@ -98,124 +303,144 @@ export default function ReminderDetailScreen() {
     )
   }
 
-  if (!record) {
-    return (
-      <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: dark ? '#fff' : '#111' }}>Reminder not found.</Text>
-      </View>
-    )
-  }
-
-  const overdue = isOverdue(record.next_due_date)
-  const days = daysUntil(record.next_due_date)
-
-  let urgencyText: string
+  const overdue = isOverdue(form.next_due_date)
+  const days = daysUntil(form.next_due_date)
   let urgencyColor: string
   if (overdue) {
-    const ago = Math.abs(days ?? 0)
-    urgencyText = ago === 0 ? 'Due today' : `${ago} day${ago === 1 ? '' : 's'} overdue`
     urgencyColor = '#e3001b'
-  } else if (days === 0) {
-    urgencyText = 'Due today'
-    urgencyColor = '#e3001b'
-  } else if (days !== null) {
-    urgencyText = `Due in ${days} day${days === 1 ? '' : 's'}`
-    urgencyColor = '#2196f3'
+  } else if (days !== null && days <= 7) {
+    urgencyColor = '#f0a500'
   } else {
-    urgencyText = 'No due date'
-    urgencyColor = dark ? '#555' : '#aaa'
+    urgencyColor = '#2196f3'
   }
 
-  const vehicleTitle = vehicle
-    ? (vehicle.nickname
-      ? `${vehicle.nickname} (${vehicle.year} ${vehicle.make} ${vehicle.model})`
-      : `${vehicle.year} ${vehicle.make} ${vehicle.model}`)
-    : ''
+  const nextDue = getNextDuePreview(form)
 
-  return (
-    <View style={s.container}>
-      {/* Header */}
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.push('/(app)/reminders')} style={s.backButton}>
-          <Ionicons name="arrow-back" size={24} color={dark ? '#fff' : '#111'} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.headerTitle} numberOfLines={1}>REMINDER</Text>
-          <Text style={s.headerSubtitle} numberOfLines={1}>{vehicleTitle.toUpperCase()}</Text>
+  // ── View Mode ──────────────────────────────────────────────
+  const viewMode = (
+    <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
+
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>REMINDER</Text>
+        <View style={s.sectionBody}>
+          <ReadRow label="TASK" value={record.task_name} dark={dark} />
+          <ReadRow label="DUE DATE" value={formatDate(record.next_due_date)} dark={dark} />
+          <ReadRow
+            label="INTERVAL"
+            value={formatInterval(record.interval_years, record.interval_months, record.interval_days)}
+            dark={dark}
+          />
+          <ReadRow label="NEXT DUE" value={nextDue} dark={dark} />
         </View>
       </View>
-      <View style={s.accentBar} />
 
-      <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
+      <TouchableOpacity style={s.markCompleteButton} onPress={handleMarkComplete}>
+        <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
+        <Text style={s.markCompleteButtonText}>MARK AS COMPLETE</Text>
+      </TouchableOpacity>
 
-        {/* Urgency banner */}
-        <View style={[s.urgencyBanner, { backgroundColor: overdue ? '#e3001b' : '#1a1a2e' }]}>
-          <Ionicons
-            name={overdue ? 'warning-outline' : 'notifications-outline'}
-            size={20}
-            color="#fff"
-          />
-          <Text style={s.urgencyText}>{urgencyText.toUpperCase()}</Text>
-        </View>
+    </ScrollView>
+  )
 
-        {/* Task card */}
-        <View style={s.card}>
-          <Text style={s.cardLabel}>TASK</Text>
-          <Text style={s.taskName}>{record.task_name}</Text>
+  // ── Edit Mode ──────────────────────────────────────────────
+  const editMode = (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <DatePickerModal
+        visible={showDatePicker}
+        value={form.next_due_date}
+        onConfirm={(date) => { setField('next_due_date', date); setShowDatePicker(false) }}
+        onCancel={() => setShowDatePicker(false)}
+        dark={dark}
+      />
+      <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-          <View style={s.divider} />
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>REMINDER</Text>
+          <View style={s.sectionBody}>
+            <EditField label="TASK NAME" value={form.task_name} onChangeText={v => setField('task_name', v)} placeholder="e.g. Oil Change" dark={dark} />
 
-          <View style={s.infoRow}>
-            <View style={s.infoItem}>
-              <Text style={s.infoLabel}>DUE DATE</Text>
-              <Text style={[s.infoValue, overdue && { color: '#e3001b' }]}>
-                {formatDate(record.next_due_date)}
-              </Text>
-            </View>
-            <View style={s.infoItem}>
-              <Text style={s.infoLabel}>INTERVAL</Text>
-              <Text style={s.infoValue}>
-                {formatInterval(record.interval_years, record.interval_months, record.interval_days)}
-              </Text>
-            </View>
-          </View>
-
-          {record.next_due_date && (
-            <View style={s.infoRow}>
-              <View style={s.infoItem}>
-                <Text style={s.infoLabel}>LAST DONE</Text>
-                <Text style={s.infoValue}>{formatDate(record.completed_date)}</Text>
-              </View>
-              <View style={s.infoItem}>
-                <Text style={s.infoLabel}>STATUS</Text>
-                <Text style={[s.infoValue, { color: urgencyColor }]}>
-                  {overdue ? 'OVERDUE' : 'UPCOMING'}
+            <View style={s.fieldContainer}>
+              <Text style={s.fieldLabel}>DUE DATE</Text>
+              <TouchableOpacity style={[s.input, s.dateButton]} onPress={() => setShowDatePicker(true)}>
+                <Text style={{ color: form.next_due_date ? (dark ? '#fff' : '#111') : (dark ? '#444' : '#bbb'), fontSize: 15 }}>
+                  {form.next_due_date ? formatDate(form.next_due_date) : 'Select due date'}
                 </Text>
+                <Ionicons name="calendar-outline" size={16} color={dark ? '#555' : '#aaa'} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={s.intervalTitle}>REMIND ME IN...</Text>
+            <View style={s.intervalRow}>
+              <View style={s.intervalField}>
+                <TextInput
+                  style={s.intervalInput}
+                  value={form.interval_years}
+                  onChangeText={v => setField('interval_years', v.replace(/[^0-9]/g, ''))}
+                  placeholder="0"
+                  placeholderTextColor={dark ? '#444' : '#bbb'}
+                  keyboardType="numeric"
+                  maxLength={2}
+                />
+                <Text style={s.intervalLabel}>YEARS</Text>
+              </View>
+              <View style={s.intervalField}>
+                <TextInput
+                  style={s.intervalInput}
+                  value={form.interval_months}
+                  onChangeText={v => setField('interval_months', v.replace(/[^0-9]/g, ''))}
+                  placeholder="0"
+                  placeholderTextColor={dark ? '#444' : '#bbb'}
+                  keyboardType="numeric"
+                  maxLength={2}
+                />
+                <Text style={s.intervalLabel}>MONTHS</Text>
+              </View>
+              <View style={s.intervalField}>
+                <TextInput
+                  style={s.intervalInput}
+                  value={form.interval_days}
+                  onChangeText={v => setField('interval_days', v.replace(/[^0-9]/g, ''))}
+                  placeholder="0"
+                  placeholderTextColor={dark ? '#444' : '#bbb'}
+                  keyboardType="numeric"
+                  maxLength={3}
+                />
+                <Text style={s.intervalLabel}>DAYS</Text>
               </View>
             </View>
-          )}
+
+            {nextDue && (
+              <View style={s.nextDueContainer}>
+                <Ionicons name="calendar-outline" size={14} color="#e3001b" />
+                <Text style={s.nextDueText}>Next due: <Text style={s.nextDueDate}>{nextDue}</Text></Text>
+              </View>
+            )}
+          </View>
         </View>
 
-        {/* Mark as Complete button */}
-        <TouchableOpacity style={s.completeButton} onPress={handleMarkComplete} activeOpacity={0.85}>
-          <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
-          <Text style={s.completeButtonText}>MARK AS COMPLETE</Text>
-        </TouchableOpacity>
-
-        <Text style={s.completeHint}>
-          This will open the new record screen pre-filled with today's date and the task name. The reminder will update automatically once saved.
-        </Text>
-
-        {/* View full record link */}
-        <TouchableOpacity
-          style={s.viewRecordButton}
-          onPress={() => router.push(`/(app)/records/${vehicleId}/${recordId}`)}
-        >
-          <Text style={s.viewRecordText}>VIEW FULL MAINTENANCE RECORD</Text>
-          <Ionicons name="chevron-forward" size={14} color={dark ? '#555' : '#aaa'} />
+        <TouchableOpacity style={[s.saveButton, saving && s.saveButtonDisabled]} onPress={handleSave} disabled={saving}>
+          {saving ? <ActivityIndicator color="#fff" /> : <Text style={s.saveButtonText}>SAVE CHANGES</Text>}
         </TouchableOpacity>
 
       </ScrollView>
+    </KeyboardAvoidingView>
+  )
+
+  return (
+    <View style={s.container}>
+      <View style={s.header}>
+        <TouchableOpacity onPress={() => router.push('/(app)/reminders')} style={s.headerButton}>
+          <Ionicons name="arrow-back" size={24} color={dark ? '#fff' : '#111'} />
+        </TouchableOpacity>
+        <Text style={s.headerTitle} numberOfLines={1}>{record.task_name.toUpperCase()}</Text>
+        <TouchableOpacity onPress={handleEditPress} style={s.headerButton}>
+          <Text style={[s.headerAction, editing && s.headerActionCancel]}>
+            {editing ? 'CANCEL' : 'EDIT'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <View style={s.accentBar} />
+      {editing ? editMode : viewMode}
     </View>
   )
 }
@@ -223,72 +448,87 @@ export default function ReminderDetailScreen() {
 const styles = (dark: boolean) => StyleSheet.create({
   container: { flex: 1, backgroundColor: dark ? '#0f0f0f' : '#f5f5f0' },
   header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 24, paddingTop: 64, paddingBottom: 16, gap: 12,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 24, paddingTop: 64, paddingBottom: 16,
   },
-  backButton: { padding: 4, marginRight: 4 },
+  headerButton: { width: 64, height: 40, justifyContent: 'center' },
   headerTitle: {
-    fontSize: 18, fontWeight: '900', letterSpacing: 3,
-    color: dark ? '#fff' : '#111',
+    flex: 1, fontSize: 13, fontWeight: '900', letterSpacing: 2,
+    color: dark ? '#fff' : '#111', textAlign: 'center',
   },
-  headerSubtitle: {
-    fontSize: 11, fontWeight: '700', letterSpacing: 2,
-    color: dark ? '#555' : '#aaa', marginTop: 2,
-  },
-  accentBar: { height: 3, backgroundColor: '#e3001b', marginHorizontal: 24, borderRadius: 1 },
+  headerAction: { fontSize: 12, fontWeight: '800', letterSpacing: 2, color: '#e3001b', textAlign: 'right' },
+  headerActionCancel: { color: dark ? '#666' : '#999' },
+  accentBar: { height: 2, backgroundColor: '#e3001b', marginHorizontal: 24, marginBottom: 24 },
+  accentBarSmall: { height: 2, backgroundColor: '#e3001b', marginBottom: 20 },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 48 },
-
-  urgencyBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    padding: 16, borderRadius: 4, marginBottom: 20,
+  scrollContent: { paddingHorizontal: 24, paddingBottom: 48, gap: 12 },
+  section: {
+    borderWidth: 1, borderColor: dark ? '#2a2a2a' : '#e8e8e8',
+    backgroundColor: dark ? '#1a1a1a' : '#ffffff',
   },
-  urgencyText: {
-    color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 2,
+  sectionTitle: {
+    fontSize: 11, fontWeight: '800', letterSpacing: 3,
+    color: dark ? '#fff' : '#111', padding: 16,
+    borderBottomWidth: 1, borderBottomColor: dark ? '#2a2a2a' : '#f0f0f0',
   },
-
-  card: {
-    backgroundColor: dark ? '#1a1a1a' : '#fff',
-    borderRadius: 4, padding: 20, marginBottom: 24,
-    borderWidth: 1, borderColor: dark ? '#222' : '#ebebeb',
+  sectionBody: { padding: 16, gap: 12 },
+  readRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
+    paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: dark ? '#1f1f1f' : '#f8f8f8',
   },
-  cardLabel: {
-    fontSize: 10, fontWeight: '800', letterSpacing: 3,
-    color: dark ? '#555' : '#999', marginBottom: 8,
+  readLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, color: dark ? '#555' : '#aaa' },
+  readValue: { fontSize: 14, fontWeight: '600', color: dark ? '#fff' : '#111', textAlign: 'right', flex: 1, marginLeft: 16 },
+  fieldContainer: { gap: 6 },
+  fieldLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999' },
+  input: {
+    height: 48, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8',
+    backgroundColor: dark ? '#111' : '#fafafa', color: dark ? '#fff' : '#111',
+    paddingHorizontal: 14, fontSize: 15,
   },
-  taskName: {
-    fontSize: 24, fontWeight: '900', letterSpacing: 1,
+  dateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  intervalTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999' },
+  intervalRow: { flexDirection: 'row', gap: 12 },
+  intervalField: { flex: 1, gap: 6, alignItems: 'center' },
+  intervalInput: {
+    width: '100%', height: 52, borderWidth: 1.5,
+    borderColor: dark ? '#2a2a2a' : '#e8e8e8',
+    backgroundColor: dark ? '#111' : '#fafafa',
     color: dark ? '#fff' : '#111',
+    fontSize: 22, fontWeight: '700', textAlign: 'center',
   },
-  divider: { height: 1, backgroundColor: dark ? '#222' : '#f0f0f0', marginVertical: 16 },
-  infoRow: { flexDirection: 'row', gap: 16, marginBottom: 12 },
-  infoItem: { flex: 1 },
-  infoLabel: {
-    fontSize: 10, fontWeight: '800', letterSpacing: 2,
-    color: dark ? '#555' : '#999', marginBottom: 4,
+  intervalLabel: { fontSize: 9, fontWeight: '800', letterSpacing: 2, color: dark ? '#555' : '#aaa' },
+  nextDueContainer: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 4 },
+  nextDueText: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, color: dark ? '#666' : '#888' },
+  nextDueDate: { color: '#e3001b', fontWeight: '800' },
+  markCompleteButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: '#e3001b', height: 52,
+    marginTop: 8,
   },
-  infoValue: {
-    fontSize: 14, fontWeight: '700', color: dark ? '#ccc' : '#333',
+  markCompleteButtonText: {
+    color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 3,
   },
-
-  completeButton: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: '#e3001b', padding: 18, borderRadius: 4, marginBottom: 12,
+  saveButton: {
+    height: 52, backgroundColor: '#e3001b',
+    alignItems: 'center', justifyContent: 'center', marginTop: 8,
   },
-  completeButtonText: {
-    color: '#fff', fontSize: 13, fontWeight: '900', letterSpacing: 2,
-  },
-  completeHint: {
-    fontSize: 12, color: dark ? '#444' : '#aaa',
-    textAlign: 'center', lineHeight: 18, marginBottom: 32,
-  },
-
-  viewRecordButton: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    paddingVertical: 14,
-  },
-  viewRecordText: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 2,
-    color: dark ? '#555' : '#aaa',
-  },
+  saveButtonDisabled: { opacity: 0.6 },
+  saveButtonText: { color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 4 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modalContainer: { backgroundColor: dark ? '#1a1a1a' : '#ffffff', padding: 24, paddingBottom: 40 },
+  modalTitle: { fontSize: 16, fontWeight: '900', letterSpacing: 4, color: dark ? '#fff' : '#111', marginBottom: 12 },
+  pickerRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  pickerColumn: { flex: 2 },
+  pickerColumnSmall: { flex: 1 },
+  pickerLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999', marginBottom: 8 },
+  pickerScroll: { height: 200, borderWidth: 1, borderColor: dark ? '#2a2a2a' : '#e8e8e8' },
+  pickerItem: { paddingVertical: 10, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: dark ? '#2a2a2a' : '#f0f0f0' },
+  pickerItemActive: { backgroundColor: '#e3001b' },
+  pickerItemText: { fontSize: 13, fontWeight: '600', color: dark ? '#888' : '#666' },
+  pickerItemTextActive: { color: '#fff', fontWeight: '800' },
+  modalButtons: { flexDirection: 'row', gap: 12 },
+  modalCancelButton: { flex: 1, height: 48, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8', alignItems: 'center', justifyContent: 'center' },
+  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#555' : '#999' },
+  modalConfirmButton: { flex: 1, height: 48, backgroundColor: '#e3001b', alignItems: 'center', justifyContent: 'center' },
+  modalConfirmText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: '#fff' },
 })
