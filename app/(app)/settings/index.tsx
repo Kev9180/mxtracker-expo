@@ -498,6 +498,20 @@ export default function SettingsScreen() {
         {/* NOTIFICATIONS */}
         <SectionHeader title="NOTIFICATIONS" dark={dark} />
         <View style={s.section}>
+          <SettingToggle
+            label="Push Notifications"
+            subtitle={profile?.push_notifications_enabled ? 'Maintenance reminders sent to this device' : 'Push notifications are off'}
+            value={profile?.push_notifications_enabled ?? true}
+            onValueChange={(v) => saveField('push_notifications_enabled', v)}
+            dark={dark}
+          />
+          <SettingToggle
+            label="Email Reminders"
+            subtitle={profile?.reminders_enabled ? 'Reminder emails are on' : 'Reminder emails are off'}
+            value={profile?.reminders_enabled ?? true}
+            onValueChange={(v) => saveField('reminders_enabled', v)}
+            dark={dark}
+          />
           <SettingRow
             label="Reminder Email"
             subtitle={profile?.reminder_email || userEmail || 'Tap to set'}
@@ -506,13 +520,6 @@ export default function SettingsScreen() {
               placeholder: 'email@example.com',
               keyboardType: 'email-address'
             })}
-            dark={dark}
-          />
-          <SettingToggle
-            label="Email Reminders"
-            subtitle={profile?.reminders_enabled ? 'Reminder emails are on' : 'Reminder emails are off'}
-            value={profile?.reminders_enabled ?? true}
-            onValueChange={(v) => saveField('reminders_enabled', v)}
             dark={dark}
             last
           />

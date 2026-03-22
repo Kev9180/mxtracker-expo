@@ -205,6 +205,8 @@ export type Database = {
           display_name: string | null
           id: string
           odometer_unit: string
+          push_notifications_enabled: boolean
+          push_token: string | null
           remind_days_before: number
           reminder_email: string | null
           reminders_enabled: boolean
@@ -216,6 +218,8 @@ export type Database = {
           display_name?: string | null
           id: string
           odometer_unit?: string
+          push_notifications_enabled?: boolean
+          push_token?: string | null
           remind_days_before?: number
           reminder_email?: string | null
           reminders_enabled?: boolean
@@ -227,6 +231,8 @@ export type Database = {
           display_name?: string | null
           id?: string
           odometer_unit?: string
+          push_notifications_enabled?: boolean
+          push_token?: string | null
           remind_days_before?: number
           reminder_email?: string | null
           reminders_enabled?: boolean

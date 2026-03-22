@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     // Fetch the record to confirm it exists
     const { data: record, error } = await supabase
       .from("maintenance_records")
-      .select("id, task_name, vehicles(year, make, model, nickname)")
+      .select("id, task_name, vehicle_id, vehicles(year, make, model, nickname)")
       .eq("id", recordId)
       .single()
 
@@ -107,6 +107,22 @@ Deno.serve(async (req) => {
         status: 302,
         headers: {
           'Location': 'https://confirm.mxtracker.app/?result=stop'
+        }
+      })
+    }
+
+    if (action === "complete") {
+      const vehicleId = (record as any).vehicle_id
+      const vehicle = record.vehicles as any
+      const vehicleName = vehicle.nickname
+        ? `${vehicle.nickname} (${vehicle.year} ${vehicle.make} ${vehicle.model})`
+        : `${vehicle.year} ${vehicle.make} ${vehicle.model}`
+      const task = encodeURIComponent(record.task_name)
+      const veh = encodeURIComponent(vehicleName)
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `https://confirm.mxtracker.app/open/${vehicleId}/${recordId}?task=${task}&vehicle=${veh}`
         }
       })
     }

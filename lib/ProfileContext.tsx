@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { supabase } from './supabase'
 import { Database } from '../types/database.types'
+import { registerForPushNotificationsAsync } from './notifications'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 
@@ -38,6 +39,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       .eq('id', user.id)
       .single()
 
+    let resolvedProfile = data
+
     if (data) {
       // Auto-detect timezone if not set or still on default
       const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -46,9 +49,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           .from('profiles')
           .update({ timezone: deviceTimezone })
           .eq('id', user.id)
-        setProfile({ ...data, timezone: deviceTimezone })
-      } else {
-        setProfile(data)
+        resolvedProfile = { ...data, timezone: deviceTimezone }
       }
     } else {
       const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -64,7 +65,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         })
         .select()
         .single()
-      if (newProfile) setProfile(newProfile)
+      if (newProfile) resolvedProfile = newProfile
+    }
+
+    if (resolvedProfile) {
+      // Register for push notifications and persist the token if it changed
+      const token = await registerForPushNotificationsAsync()
+      if (token && token !== resolvedProfile.push_token) {
+        await supabase
+          .from('profiles')
+          .update({ push_token: token })
+          .eq('id', user.id)
+        resolvedProfile = { ...resolvedProfile, push_token: token }
+      }
+      setProfile(resolvedProfile)
     }
   }
 

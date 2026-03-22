@@ -51,7 +51,7 @@ Deno.serve(async (_req) => {
     const userIds = [...new Set(records.map((r) => r.user_id))]
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, reminder_email, reminders_enabled, remind_days_before, display_name, timezone")
+      .select("id, reminder_email, reminders_enabled, remind_days_before, display_name, timezone, push_token, push_notifications_enabled")
       .in("id", userIds)
 
     if (profilesError) {
@@ -70,15 +70,16 @@ Deno.serve(async (_req) => {
       const vehicle = record.vehicles as any
       const profile = profileMap[record.user_id]
 
-      // Skip if no profile or global reminders are off
-      if (!profile || !profile.reminders_enabled) {
+      // Skip if no profile, or all notification channels are disabled
+      if (!profile || (!profile.reminders_enabled && !profile.push_notifications_enabled)) {
         skipped++
         continue
       }
 
-      // Skip if no email address
-      const toEmail = profile.reminder_email
-      if (!toEmail) {
+      // Skip if no delivery channels available at all
+      const willEmail = profile.reminders_enabled && !!profile.reminder_email
+      const willPush = profile.push_notifications_enabled && !!profile.push_token
+      if (!willEmail && !willPush) {
         skipped++
         continue
       }
@@ -147,9 +148,47 @@ Deno.serve(async (_req) => {
       // Generate action URLs for this record
       const token = await generateToken(record.id)
       const baseUrl = "https://hetmchofwmouscvlkxka.supabase.co/functions/v1/handle-reminder-action"
+      const completeUrl = `${baseUrl}?record_id=${record.id}&action=complete&token=${token}`
       const snoozeWeekUrl = `${baseUrl}?record_id=${record.id}&action=snooze_week&token=${token}`
       const snoozeMonthUrl = `${baseUrl}?record_id=${record.id}&action=snooze_month&token=${token}`
       const stopUrl = `${baseUrl}?record_id=${record.id}&action=stop&token=${token}`
+
+      // ── Send push notification ───────────────────────────────────────────────
+      if (willPush) {
+        let pushTitle: string
+        let pushBody: string
+        if (isOverdue) {
+          const daysOverdue = Math.abs(daysUntilDue)
+          pushTitle = `⚠️ Overdue: ${record.task_name}`
+          pushBody = `${vehicleName} — ${daysOverdue} day${daysOverdue === 1 ? '' : 's'} overdue`
+        } else if (daysUntilDue === 0) {
+          pushTitle = `🔧 Due today: ${record.task_name}`
+          pushBody = vehicleName
+        } else {
+          pushTitle = `🔧 ${record.task_name} due in ${daysUntilDue} day${daysUntilDue === 1 ? '' : 's'}`
+          pushBody = vehicleName
+        }
+
+        try {
+          await fetch('https://exp.host/--/api/v2/push/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Accept-Encoding': 'gzip, deflate',
+            },
+            body: JSON.stringify({
+              to: profile.push_token,
+              title: pushTitle,
+              body: pushBody,
+              sound: 'default',
+              data: { recordId: record.id, vehicleId: record.vehicles ? (record.vehicles as any).id : undefined },
+            }),
+          })
+        } catch (pushErr) {
+          console.error('Push notification failed:', pushErr)
+        }
+      }
 
       const html = `
         <!DOCTYPE html>
@@ -191,11 +230,18 @@ Deno.serve(async (_req) => {
                           </tr>
                         </table>
                         <p style="margin: 0 0 20px 0; font-size: 13px; color: #999999;">
-                          Open MXTracker to log this service once it's done.
+                          Tap <strong>Mark as Complete</strong> to log this service and update your records in MXTracker.
                         </p>
 
                         <!-- Action buttons -->
                         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
+                          <tr>
+                            <td style="padding-bottom: 10px;">
+                              <a href="${completeUrl}" style="display: block; text-align: center; background-color: #e3001b; color: #ffffff; padding: 16px 20px; font-size: 13px; font-weight: 800; letter-spacing: 2px; text-decoration: none;">
+                                ✓ MARK AS COMPLETE
+                              </a>
+                            </td>
+                          </tr>
                           <tr>
                             <td style="padding-bottom: 10px;">
                               <a href="${snoozeWeekUrl}" style="display: block; text-align: center; background-color: #111111; color: #ffffff; padding: 14px 20px; font-size: 12px; font-weight: 800; letter-spacing: 2px; text-decoration: none;">
@@ -239,6 +285,19 @@ Deno.serve(async (_req) => {
           </body>
         </html>
       `
+
+      // ── Send email ───────────────────────────────────────────────────────────
+      if (!willEmail) {
+        // Push was sent (or attempted); still mark reminder as sent and log
+        await supabase
+          .from("maintenance_records")
+          .update({ reminder_sent_at: new Date().toISOString() })
+          .eq("id", record.id)
+        sent++
+        continue
+      }
+
+      const toEmail = profile.reminder_email!
 
       // Send via Resend
       const resendResponse = await fetch("https://api.resend.com/emails", {

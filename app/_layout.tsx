@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Slot, useRouter, useSegments } from 'expo-router'
 import { Session } from '@supabase/supabase-js'
+import * as Notifications from 'expo-notifications'
 import { supabase } from '../lib/supabase'
 import { ProfileProvider } from '../lib/ProfileContext'
 import { ThemeProvider } from '../lib/ThemeContext'
@@ -10,6 +11,7 @@ export default function RootLayout() {
   const [initialized, setInitialized] = useState(false)
   const router = useRouter()
   const segments = useSegments()
+  const notificationListener = useRef<Notifications.EventSubscription>()
 
   useEffect(() => {
     // Get initial session
@@ -25,7 +27,23 @@ export default function RootLayout() {
       }
     )
 
-    return () => subscription.unsubscribe()
+    // Handle push notification taps — navigate to the reminder detail screen
+    notificationListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data as Record<string, string> | undefined
+      const recordId = data?.recordId
+      const vehicleId = data?.vehicleId
+      if (recordId && vehicleId) {
+        // Small delay to ensure navigation stack is ready
+        setTimeout(() => {
+          router.push(`/(app)/reminders/${vehicleId}/${recordId}`)
+        }, 300)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+      notificationListener.current?.remove()
+    }
   }, [])
 
   // Handle navigation based on auth state

@@ -164,6 +164,32 @@ export default {
       return new Response(page(body), { headers: { 'content-type': 'text/html;charset=UTF-8' } });
     }
 
+    // ── Open-app route: /open/{vehicleId}/{recordId}?task=...&vehicle=... ────────
+    const openMatch = path.match(/^\/open\/([a-f0-9-]{36})\/([a-f0-9-]{36})$/i);
+    if (openMatch) {
+      const vehicleId = openMatch[1];
+      const recordId = openMatch[2];
+      const taskName = url.searchParams.get('task') || 'Maintenance';
+      const vehicleName = url.searchParams.get('vehicle') || '';
+      const deepLink = `mxtracker://reminders/${vehicleId}/${recordId}`;
+
+      const openBody = `
+        <span class="status-icon">🔧</span>
+        <h1>Mark as Complete</h1>
+        <p class="vehicle-name">${vehicleName ? vehicleName.toUpperCase() : ''}</p>
+        <p class="message">${taskName}</p>
+        <p class="message" style="font-size:14px;color:#999;margin-bottom:28px;">Opening MXTracker to log this service...</p>
+        <a href="${deepLink}" id="openBtn" style="display:block;background:#e3001b;color:#fff;padding:16px 24px;font-size:12px;font-weight:900;letter-spacing:3px;text-decoration:none;text-align:center;text-transform:uppercase;margin-bottom:16px;">Open in MXTracker</a>
+        <p style="font-size:11px;color:#bbb;line-height:1.6;">If the app doesn't open automatically, tap the button above. Make sure MXTracker is installed on this device.</p>
+        <script>
+          window.addEventListener('load', function() {
+            setTimeout(function() { window.location.href = '${deepLink}'; }, 100);
+          });
+        <\/script>`;
+
+      return new Response(page(openBody), { headers: { 'content-type': 'text/html;charset=UTF-8' } });
+    }
+
     // ── Confirmation route: /?result= ─────────────────────────────────────────
     const result = url.searchParams.get('result');
     const confirmations = {

@@ -17,6 +17,8 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../../lib/supabase'
 import { useTheme } from '../../../../lib/ThemeContext'
+import { useProfile } from '../../../../lib/ProfileContext'
+import { registerForPushNotificationsAsync } from '../../../../lib/notifications'
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -129,12 +131,19 @@ function DatePickerModal({ visible, value, onConfirm, onCancel, dark }: {
 // ── Main Component ─────────────────────────────────────────────
 
 export default function NewRecord() {
-  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
+  const { vehicleId, prefillTaskName, prefillDate, fromReminderId } =
+    useLocalSearchParams<{
+      vehicleId: string
+      prefillTaskName?: string
+      prefillDate?: string
+      fromReminderId?: string
+    }>()
   const { dark } = useTheme()
   const s = styles(dark)
+  const { profile } = useProfile()
 
-  const [taskName, setTaskName] = useState('')
-  const [completedDate, setCompletedDate] = useState('')
+  const [taskName, setTaskName] = useState(prefillTaskName ?? '')
+  const [completedDate, setCompletedDate] = useState(prefillDate ?? '')
   const [mileage, setMileage] = useState('')
   const [performedBy, setPerformedBy] = useState('')
   const [cost, setCost] = useState('')
@@ -145,6 +154,34 @@ export default function NewRecord() {
   const [intervalDays, setIntervalDays] = useState('')
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  async function handleReminderToggle(enabled: boolean) {
+    if (enabled) {
+      // Request push permission if push is enabled in profile but token not yet granted
+      if (profile?.push_notifications_enabled) {
+        const token = await registerForPushNotificationsAsync()
+        if (!token) {
+          Alert.alert(
+            'Push Notifications Blocked',
+            'You have push notifications enabled in Settings but this device hasn\'t granted permission. You can still receive email reminders, or go to your device Settings to allow notifications for MXTracker.',
+            [{ text: 'OK' }]
+          )
+        }
+      }
+    }
+    setReminderEnabled(enabled)
+  }
+
+  // Summary of which channels will deliver this reminder
+  function getReminderChannelHint(): string | null {
+    if (!reminderEnabled) return null
+    const email = profile?.reminders_enabled
+    const push = profile?.push_notifications_enabled
+    if (email && push) return 'Reminder will be sent via push notification and email'
+    if (push) return 'Reminder will be sent via push notification'
+    if (email) return 'Reminder will be sent via email'
+    return 'All notifications are off — enable them in Settings'
+  }
 
   // Calculate next due date preview
   function getNextDuePreview(): string | null {
@@ -216,6 +253,16 @@ export default function NewRecord() {
       Alert.alert('Error', error.message)
       return
     }
+
+    // If this record was created by completing a reminder, disable that old reminder
+    // (it will be replaced by the new record's own reminder if enabled above)
+    if (fromReminderId) {
+      await supabase
+        .from('maintenance_records')
+        .update({ reminder_enabled: false })
+        .eq('id', fromReminderId)
+    }
+
     router.back()
   }
 
@@ -239,7 +286,7 @@ export default function NewRecord() {
         <TouchableOpacity onPress={() => router.back()} style={s.backButton}>
           <Ionicons name="arrow-back" size={24} color={dark ? '#fff' : '#111'} />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>ADD RECORD</Text>
+        <Text style={s.headerTitle}>{fromReminderId ? 'LOG SERVICE' : 'ADD RECORD'}</Text>
         <View style={{ width: 40 }} />
       </View>
       <View style={s.accentBar} />
@@ -250,6 +297,16 @@ export default function NewRecord() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {/* Prefilled from reminder banner */}
+        {fromReminderId && (
+          <View style={s.reminderBanner}>
+            <Ionicons name="checkmark-circle-outline" size={16} color="#e3001b" />
+            <Text style={s.reminderBannerText}>
+              Logging completion of reminder — task and date are pre-filled.
+            </Text>
+          </View>
+        )}
+
         {/* Task Name */}
         <Field
           label="TASK NAME *"
@@ -328,11 +385,24 @@ export default function NewRecord() {
           </View>
           <Switch
             value={reminderEnabled}
-            onValueChange={setReminderEnabled}
+            onValueChange={handleReminderToggle}
             trackColor={{ false: dark ? '#2a2a2a' : '#e0e0e0', true: '#e3001b' }}
             thumbColor="#fff"
           />
         </View>
+        {reminderEnabled && getReminderChannelHint() && (
+          <View style={s.channelHint}>
+            <Ionicons
+              name={profile?.push_notifications_enabled || profile?.reminders_enabled ? 'checkmark-circle-outline' : 'warning-outline'}
+              size={13}
+              color={profile?.push_notifications_enabled || profile?.reminders_enabled ? '#22c55e' : '#f0a500'}
+            />
+            <Text style={[
+              s.channelHintText,
+              { color: profile?.push_notifications_enabled || profile?.reminders_enabled ? (dark ? '#555' : '#888') : '#f0a500' }
+            ]}>{getReminderChannelHint()}</Text>
+          </View>
+        )}
 
         {/* Interval fields — only shown when reminder is on */}
         {reminderEnabled && (
@@ -445,6 +515,12 @@ const styles = (dark: boolean) => StyleSheet.create({
     fontSize: 11, color: dark ? '#555' : '#aaa',
     letterSpacing: 0.5, marginTop: 2,
   },
+  channelHint: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: -8,
+  },
+  channelHintText: {
+    fontSize: 11, letterSpacing: 0.3, flex: 1,
+  },
   intervalContainer: {
     borderWidth: 1, borderColor: dark ? '#2a2a2a' : '#e8e8e8',
     backgroundColor: dark ? '#1a1a1a' : '#fff',
@@ -503,4 +579,15 @@ const styles = (dark: boolean) => StyleSheet.create({
   modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#555' : '#999' },
   modalConfirmButton: { flex: 1, height: 48, backgroundColor: '#e3001b', alignItems: 'center', justifyContent: 'center' },
   modalConfirmText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: '#fff' },
+
+  // Reminder completion banner
+  reminderBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: dark ? '#1a0a0a' : '#fff5f5',
+    borderWidth: 1, borderColor: '#e3001b30',
+    padding: 14, marginBottom: 8,
+  },
+  reminderBannerText: {
+    flex: 1, fontSize: 12, color: dark ? '#cc4444' : '#c0392b', lineHeight: 17,
+  },
 })
