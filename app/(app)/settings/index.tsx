@@ -381,6 +381,12 @@ export default function SettingsScreen() {
   }
 
   async function handleSignOut() {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to sign out?')) {
+        await supabase.auth.signOut()
+      }
+      return
+    }
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out?',
@@ -393,6 +399,47 @@ export default function SettingsScreen() {
         }
       ]
     )
+  }
+
+  async function handleDeleteAccount() {
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm('Delete your account? This will permanently erase all your vehicles, records, and reminders. This cannot be undone.')
+      : await new Promise<boolean>(resolve =>
+          Alert.alert(
+            'Delete Account',
+            'This will permanently erase all your vehicles, maintenance records, and reminders. This cannot be undone.',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Delete Forever', style: 'destructive', onPress: () => resolve(true) },
+            ]
+          )
+        )
+
+    if (!confirmed) return
+
+    setSaving(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not authenticated')
+
+      const res = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }
+      )
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error ?? 'Failed to delete account')
+      }
+
+      await supabase.auth.signOut()
+    } catch (err: any) {
+      setSaving(false)
+      Alert.alert('Error', err.message ?? 'Could not delete account. Please try again.')
+    }
   }
 
   if (loading) {
@@ -555,7 +602,16 @@ export default function SettingsScreen() {
           <SettingRow
             label="Send Feedback"
             subtitle="Report a bug or suggest a feature"
-            onPress={() => Linking.openURL('mailto:developer@mxtracker.app?subject=MXTracker Feedback')}
+            onPress={() => Platform.OS === 'web'
+              ? Linking.openURL('https://mxtracker.app/support')
+              : Linking.openURL('mailto:developer@mxtracker.app?subject=MXTracker Feedback')
+            }
+            dark={dark}
+          />
+          <SettingRow
+            label="Privacy Policy"
+            subtitle="How we handle your data"
+            onPress={() => Linking.openURL('https://mxtracker.app/privacy')}
             dark={dark}
             last
           />
@@ -564,6 +620,10 @@ export default function SettingsScreen() {
         <TouchableOpacity style={s.signOutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={18} color="#e3001b" />
           <Text style={s.signOutText}>SIGN OUT</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={s.deleteAccountButton} onPress={handleDeleteAccount}>
+          <Text style={s.deleteAccountText}>DELETE ACCOUNT</Text>
         </TouchableOpacity>
 
         {saving && (
@@ -611,6 +671,12 @@ const styles = (dark: boolean) => StyleSheet.create({
     borderWidth: 1.5, borderColor: '#e3001b',
   },
   signOutText: { color: '#e3001b', fontSize: 13, fontWeight: '800', letterSpacing: 3 },
+
+  deleteAccountButton: {
+    alignItems: 'center', justifyContent: 'center',
+    height: 44, marginTop: 12,
+  },
+  deleteAccountText: { color: dark ? '#444' : '#bbb', fontSize: 11, fontWeight: '700', letterSpacing: 2 },
 
   savingIndicator: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

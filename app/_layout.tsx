@@ -1,17 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
 import { Slot, useRouter, useSegments } from 'expo-router'
+import { View, StyleSheet, Platform } from 'react-native'
 import { Session } from '@supabase/supabase-js'
 import * as Notifications from 'expo-notifications'
 import { supabase } from '../lib/supabase'
 import { ProfileProvider } from '../lib/ProfileContext'
-import { ThemeProvider } from '../lib/ThemeContext'
+import { ThemeProvider, useTheme } from '../lib/ThemeContext'
+import { supportsNativePushNotifications } from '../lib/notifications'
+
+function WebWrapper({ children }: { children: React.ReactNode }) {
+  const { dark } = useTheme()
+  return (
+    <View style={[s.webOuter, { backgroundColor: dark ? '#0f0f0f' : '#f5f5f0' }]}>
+      <View style={s.webInner}>
+        {children}
+      </View>
+    </View>
+  )
+}
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null)
   const [initialized, setInitialized] = useState(false)
   const router = useRouter()
   const segments = useSegments()
-  const notificationListener = useRef<Notifications.EventSubscription>()
+  const notificationListener = useRef<Notifications.EventSubscription | null>(null)
 
   useEffect(() => {
     // Get initial session
@@ -27,18 +40,22 @@ export default function RootLayout() {
       }
     )
 
-    // Handle push notification taps — navigate to the reminder detail screen
-    notificationListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      const data = response.notification.request.content.data as Record<string, string> | undefined
-      const recordId = data?.recordId
-      const vehicleId = data?.vehicleId
-      if (recordId && vehicleId) {
-        // Small delay to ensure navigation stack is ready
-        setTimeout(() => {
-          router.push(`/(app)/reminders/${vehicleId}/${recordId}`)
-        }, 300)
-      }
-    })
+    // Handle push notification taps — navigate to the reminder detail screen.
+    // expo-notifications is not supported on macOS ("Designed for iPhone" on Mac),
+    // so skip the listener registration there to avoid a TurboModule crash.
+    if (supportsNativePushNotifications()) {
+      notificationListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+        const data = response.notification.request.content.data as Record<string, string> | undefined
+        const recordId = data?.recordId
+        const vehicleId = data?.vehicleId
+        if (recordId && vehicleId) {
+          // Small delay to ensure navigation stack is ready
+          setTimeout(() => {
+            router.push(`/(app)/reminders/${vehicleId}/${recordId}`)
+          }, 300)
+        }
+      })
+    }
 
     return () => {
       subscription.unsubscribe()
@@ -66,8 +83,27 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <ProfileProvider>
-        <Slot />
+        {Platform.OS === 'web' ? (
+          <WebWrapper>
+            <Slot />
+          </WebWrapper>
+        ) : (
+          <Slot />
+        )}
       </ProfileProvider>
     </ThemeProvider>
   )
 }
+
+const s = StyleSheet.create({
+  webOuter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  webInner: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 768,
+    overflow: 'hidden',
+  },
+})

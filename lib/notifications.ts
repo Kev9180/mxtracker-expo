@@ -2,25 +2,43 @@ import * as Notifications from 'expo-notifications'
 import * as Device from 'expo-device'
 import { Platform } from 'react-native'
 
-// Configure how notifications appear while the app is in the foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-})
+function isMacDesignedForIOSApp() {
+  if (Platform.OS !== 'ios') return false
+
+  const interfaceIdiom = (Platform.constants as { interfaceIdiom?: string } | undefined)?.interfaceIdiom
+
+  return interfaceIdiom === 'mac'
+    || Device.deviceType === Device.DeviceType.DESKTOP
+    || Device.osName === 'macOS'
+    || Device.modelName?.includes('Mac') === true
+    || Device.modelId?.startsWith('Mac') === true
+}
+
+export function supportsNativePushNotifications() {
+  return Platform.OS !== 'web' && !isMacDesignedForIOSApp() && Device.isDevice
+}
+
+// Configure how notifications appear while the app is in the foreground.
+// expo-notifications is not supported on macOS (Mac Catalyst / "Designed for iPhone" on Mac),
+// so guard the module-level handler setup to prevent a TurboModule crash on that platform.
+if (supportsNativePushNotifications()) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  })
+}
 
 /**
  * Requests permission and returns the Expo push token, or null if unavailable
- * (simulator, permission denied, web, etc.).
+ * (simulator, permission denied, web, macOS, etc.).
  */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
-  // Push notifications only work on native mobile platforms
-  if (Platform.OS === 'web') return null
-  if (!Device.isDevice) return null
+  // Push notifications only work on native mobile platforms, not macOS Catalyst
+  if (!supportsNativePushNotifications()) return null
 
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {

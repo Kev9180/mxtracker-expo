@@ -24,10 +24,13 @@ export default function Signup() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
   async function handleSignup() {
+    setSuccessMessage('')
+
     if (!displayName || !email || !password || !confirmPassword) {
       Alert.alert('Missing fields', 'Please fill out all fields.')
       return
@@ -46,12 +49,22 @@ export default function Signup() {
     }
     
     setLoading(true)
+    const trimmedEmail = email.trim()
+    const trimmedDisplayName = displayName.trim()
+
+    const webBaseUrl = (process.env.EXPO_PUBLIC_WEB_URL || '').replace(/\/$/, '')
+    const webRedirect = webBaseUrl
+      ? `${webBaseUrl}/login`
+      : (typeof window !== 'undefined' ? `${window.location.origin}/login` : 'https://mxtracker.app/login')
+
+    const emailRedirectTo = Platform.OS === 'web' ? webRedirect : 'mxtracker://login'
+
     const { error } = await supabase.auth.signUp({
-      email,
+      email: trimmedEmail,
       password,
       options: {
-        data: { display_name: displayName },
-        emailRedirectTo: 'mxtracker://login'
+        data: { display_name: trimmedDisplayName || displayName },
+        emailRedirectTo,
       }
     })
     setLoading(false)
@@ -61,9 +74,17 @@ export default function Signup() {
       return
     }
 
+    if (Platform.OS === 'web') {
+      setSuccessMessage(`We sent a confirmation link to ${trimmedEmail}. Check your inbox, then return to sign in.`)
+      setTimeout(() => {
+        router.replace('/(auth)/login')
+      }, 1200)
+      return
+    }
+
     Alert.alert(
       'Verify your email',
-      'We sent a confirmation link to ' + email + '. Please verify before signing in.',
+      `We sent a confirmation link to ${trimmedEmail}. Please verify before signing in.`,
       [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
     )
   }
@@ -149,6 +170,10 @@ export default function Signup() {
               : <Text style={s.buttonText}>CREATE ACCOUNT</Text>
             }
           </TouchableOpacity>
+
+          {!!successMessage && (
+            <Text style={s.successText}>{successMessage}</Text>
+          )}
         </View>
 
         {/* Footer */}
@@ -254,6 +279,12 @@ const styles = (dark: boolean) => StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 4,
+  },
+  successText: {
+    marginTop: 10,
+    color: dark ? '#78e08f' : '#1f7a31',
+    fontSize: 13,
+    lineHeight: 19,
   },
 
   // Footer
