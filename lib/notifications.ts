@@ -2,16 +2,23 @@ import * as Notifications from 'expo-notifications'
 import * as Device from 'expo-device'
 import { Platform } from 'react-native'
 
-function isMacDesignedForIOSApp() {
+function isMacDesignedForIOSApp(): boolean {
   if (Platform.OS !== 'ios') return false
 
-  const interfaceIdiom = (Platform.constants as { interfaceIdiom?: string } | undefined)?.interfaceIdiom
+  // Platform.isMacCatalyst is the correct RN 0.73+ API. It maps directly to
+  // NSProcessInfo.processInfo.isiOSAppOnMac, which is true for BOTH
+  // Mac Catalyst proper AND "Designed for iPad on Mac" mode.
+  // In "Designed for iPad on Mac", the system virtualizes itself as an iPad,
+  // so Device.osName/modelName/modelId all report iPad values — only this
+  // platform-level check reliably catches it.
+  const iOSPlatform = Platform as typeof Platform & { isMacCatalyst?: boolean }
+  if (iOSPlatform.isMacCatalyst === true) return true
 
-  return interfaceIdiom === 'mac'
-    || Device.deviceType === Device.DeviceType.DESKTOP
-    || Device.osName === 'macOS'
-    || Device.modelName?.includes('Mac') === true
-    || Device.modelId?.startsWith('Mac') === true
+  // Belt-and-suspenders fallbacks for Mac Catalyst proper
+  const constants = Platform.constants as { interfaceIdiom?: string }
+  if (constants?.interfaceIdiom === 'mac') return true
+
+  return false
 }
 
 export function supportsNativePushNotifications() {

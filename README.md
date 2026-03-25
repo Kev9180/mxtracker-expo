@@ -72,6 +72,20 @@ eas submit --platform android
 eas build --profile production --platform all
 ```
 
+### Preview Builds (Testing Before Production)
+
+The free EAS tier has 30 builds/month combined across platforms. Use a `preview` build to test native behavior (e.g. on TestFlight or a simulator) without consuming production build quota or auto-incrementing the build number:
+
+```bash
+# iOS preview — produces a .ipa installable via TestFlight
+eas build --platform ios --profile preview
+
+# Android preview — produces an .apk installable directly
+eas build --platform android --profile preview
+```
+
+Preview builds use the same native code as production, so platform-specific bugs reproduce identically. Use these to validate fixes before doing a final production build.
+
 ### Supabase Edge Functions
 
 ```bash
