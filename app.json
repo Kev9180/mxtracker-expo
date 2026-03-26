@@ -42,6 +42,14 @@
           "color": "#e3001b",
           "sounds": []
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "react-native",
+          "organization": "kevin-johnston"
+        }
       ]
     ],
     "extra": {

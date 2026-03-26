@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native'
 import { useEffect, useRef, useState } from 'react'
 import { Slot, useRouter, useSegments } from 'expo-router'
 import { View, StyleSheet, Platform } from 'react-native'
@@ -7,6 +8,17 @@ import { supabase } from '../lib/supabase'
 import { ProfileProvider } from '../lib/ProfileContext'
 import { ThemeProvider, useTheme } from '../lib/ThemeContext'
 import { supportsNativePushNotifications } from '../lib/notifications'
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  sendDefaultPii: true,
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1,
+  integrations: [Sentry.mobileReplayIntegration()],
+  _experiments: {
+    enableLogs: true,
+  },
+})
 
 function WebWrapper({ children }: { children: React.ReactNode }) {
   const { dark } = useTheme()
@@ -19,7 +31,7 @@ function WebWrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   const [session, setSession] = useState<Session | null>(null)
   const [initialized, setInitialized] = useState(false)
   const router = useRouter()
@@ -93,7 +105,7 @@ export default function RootLayout() {
       </ProfileProvider>
     </ThemeProvider>
   )
-}
+});
 
 const s = StyleSheet.create({
   webOuter: {
