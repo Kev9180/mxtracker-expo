@@ -55,7 +55,7 @@ export default function Signup() {
     const webBaseUrl = (process.env.EXPO_PUBLIC_WEB_URL || '').replace(/\/$/, '')
     const webRedirect = webBaseUrl
       ? `${webBaseUrl}/login`
-      : (typeof window !== 'undefined' ? `${window.location.origin}/login` : 'https://mxtracker.app/login')
+      : (typeof window !== 'undefined' && window.location?.origin ? `${window.location.origin}/login` : 'https://mxtracker.app/login')
 
     const emailRedirectTo = Platform.OS === 'web' ? webRedirect : 'mxtracker://login'
 
