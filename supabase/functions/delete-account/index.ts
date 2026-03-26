@@ -5,12 +5,23 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+}
+
 Deno.serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders })
+  }
+
   // Only allow POST
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   }
 
@@ -19,7 +30,7 @@ Deno.serve(async (req) => {
   if (!authHeader) {
     return new Response(JSON.stringify({ error: "Missing Authorization header" }), {
       status: 401,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   }
 
@@ -32,7 +43,7 @@ Deno.serve(async (req) => {
   if (userError || !user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   }
 
@@ -45,12 +56,12 @@ Deno.serve(async (req) => {
     console.error("Error deleting user:", deleteError)
     return new Response(JSON.stringify({ error: deleteError.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   }
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   })
 })

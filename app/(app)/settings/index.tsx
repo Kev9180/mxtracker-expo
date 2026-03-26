@@ -315,6 +315,7 @@ export default function SettingsScreen() {
   const [userEmail, setUserEmail] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const { preference: themePreference, setPreference } = useTheme()
 
   const [editModal, setEditModal] = useState<{
@@ -417,8 +418,11 @@ export default function SettingsScreen() {
 
     if (!confirmed) return
 
-    setSaving(true)
+    setDeleting(true)
     try {
+      // getUser() validates the token server-side and refreshes it if expired
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) throw new Error('Not authenticated')
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not authenticated')
 
@@ -437,7 +441,7 @@ export default function SettingsScreen() {
 
       await supabase.auth.signOut()
     } catch (err: any) {
-      setSaving(false)
+      setDeleting(false)
       Alert.alert('Error', err.message ?? 'Could not delete account. Please try again.')
     }
   }
@@ -617,13 +621,16 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <TouchableOpacity style={s.signOutButton} onPress={handleSignOut}>
+        <TouchableOpacity style={s.signOutButton} onPress={handleSignOut} disabled={deleting}>
           <Ionicons name="log-out-outline" size={18} color="#e3001b" />
           <Text style={s.signOutText}>SIGN OUT</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={s.deleteAccountButton} onPress={handleDeleteAccount}>
-          <Text style={s.deleteAccountText}>DELETE ACCOUNT</Text>
+        <TouchableOpacity style={s.deleteAccountButton} onPress={handleDeleteAccount} disabled={deleting || saving}>
+          {deleting
+            ? <ActivityIndicator size="small" color="#e3001b" />
+            : <Text style={s.deleteAccountText}>DELETE ACCOUNT</Text>
+          }
         </TouchableOpacity>
 
         {saving && (
