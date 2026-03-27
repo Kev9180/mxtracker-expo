@@ -172,10 +172,10 @@ export default function GarageScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            style={s.addButton}
-            onPress={() => router.push('/(app)/garage/new')}
+            style={s.settingsButton}
+            onPress={() => router.push('/(app)/settings')}
           >
-            <Ionicons name="add" size={24} color="#fff" />
+            <Ionicons name="settings-outline" size={24} color={dark ? '#fff' : '#111'} />
           </TouchableOpacity>
         </View>
 
@@ -188,6 +188,16 @@ export default function GarageScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <VehicleCard vehicle={item} />}
           ListEmptyComponent={<EmptyState />}
+          ListFooterComponent={
+            <TouchableOpacity
+              style={s.addVehicleButton}
+              onPress={() => router.push('/(app)/garage/new')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add" size={20} color="#fff" />
+              <Text style={s.addVehicleButtonText}>ADD NEW VEHICLE</Text>
+            </TouchableOpacity>
+          }
           contentContainerStyle={s.listContent}
           refreshControl={
             <RefreshControl
@@ -231,10 +241,9 @@ const styles = (dark: boolean) => StyleSheet.create({
     color: dark ? '#555' : '#999',
     marginTop: 2,
   },
-  addButton: {
+  settingsButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#e3001b',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -250,6 +259,23 @@ const styles = (dark: boolean) => StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 32,
     flexGrow: 1,
+  },
+
+  // Add New Vehicle button
+  addVehicleButton: {
+    backgroundColor: '#e3001b',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 52,
+    marginTop: 8,
+    gap: 8,
+  },
+  addVehicleButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 3,
   },
 
   // Card

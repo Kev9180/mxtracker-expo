@@ -14,10 +14,10 @@ import {
 import { useState, useCallback } from 'react'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { supabase } from '../../../lib/supabase'
-import { Database } from '../../../types/database.types'
-import { CardColorPicker } from '../../../components/CardColorPicker'
-import { useTheme } from '../../../lib/ThemeContext'
+import { supabase } from '../../../../lib/supabase'
+import { Database } from '../../../../types/database.types'
+import { CardColorPicker } from '../../../../components/CardColorPicker'
+import { useTheme } from '../../../../lib/ThemeContext'
 
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
 type EngineConfig = 'inline' | 'v' | 'boxer' | 'rotary' | 'other'

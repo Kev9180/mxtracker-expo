@@ -15,10 +15,10 @@ import {
 import { useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { supabase } from '../../../../lib/supabase'
-import { useTheme } from '../../../../lib/ThemeContext'
-import { useProfile } from '../../../../lib/ProfileContext'
-import { registerForPushNotificationsAsync } from '../../../../lib/notifications'
+import { supabase } from '../../../../../lib/supabase'
+import { useTheme } from '../../../../../lib/ThemeContext'
+import { useProfile } from '../../../../../lib/ProfileContext'
+import { registerForPushNotificationsAsync } from '../../../../../lib/notifications'
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -131,9 +131,9 @@ function DatePickerModal({ visible, value, onConfirm, onCancel, dark }: {
 // ── Main Component ─────────────────────────────────────────────
 
 export default function NewRecord() {
-  const { vehicleId, prefillTaskName, prefillDate, fromReminderId } =
+  const { id, prefillTaskName, prefillDate, fromReminderId } =
     useLocalSearchParams<{
-      vehicleId: string
+      id: string
       prefillTaskName?: string
       prefillDate?: string
       fromReminderId?: string
@@ -233,7 +233,7 @@ export default function NewRecord() {
     }
 
     const { error } = await supabase.from('maintenance_records').insert({
-      vehicle_id: vehicleId,
+      vehicle_id: id,
       user_id: user.id,
       task_name: taskName.trim(),
       completed_date: completedDate,
@@ -283,7 +283,7 @@ export default function NewRecord() {
 
       {/* Header */}
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.push(`/(app)/records/${vehicleId}`)} style={s.backButton}>
+        <TouchableOpacity onPress={() => router.back()} style={s.backButton}>
           <Ionicons name="arrow-back" size={24} color={dark ? '#fff' : '#111'} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>{fromReminderId ? 'LOG SERVICE' : 'ADD RECORD'}</Text>

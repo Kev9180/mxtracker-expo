@@ -13,9 +13,9 @@ import {
 import { useState, useCallback } from 'react'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { supabase } from '../../../lib/supabase'
-import { Database } from '../../../types/database.types'
-import { useTheme } from '../../../lib/ThemeContext'
+import { supabase } from '../../../../../lib/supabase'
+import { Database } from '../../../../../types/database.types'
+import { useTheme } from '../../../../../lib/ThemeContext'
 
 type MaintenanceRecord = Database['public']['Tables']['maintenance_records']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
@@ -34,7 +34,7 @@ function isOverdue(dateStr: string | null | undefined): boolean {
 }
 
 export default function VehicleRemindersScreen() {
-  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
+  const { id } = useLocalSearchParams<{ id: string }>()
   const { dark } = useTheme()
   const s = styles(dark)
 
@@ -46,15 +46,15 @@ export default function VehicleRemindersScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchData()
-    }, [vehicleId])
+    }, [id])
   )
 
   async function fetchData() {
     const [vehicleRes, remindersRes] = await Promise.all([
-      supabase.from('vehicles').select('*').eq('id', vehicleId).single(),
+      supabase.from('vehicles').select('*').eq('id', id).single(),
       supabase.from('maintenance_records')
         .select('*')
-        .eq('vehicle_id', vehicleId)
+        .eq('vehicle_id', id)
         .eq('reminder_enabled', true)
         .order('next_due_date', { ascending: true }),
     ])
@@ -157,7 +157,7 @@ export default function VehicleRemindersScreen() {
                 <Swipeable renderRightActions={renderRightActions} overshootRight={false}>
                   <TouchableOpacity
                     style={s.card}
-                    onPress={() => router.push(`/(app)/reminders/${vehicleId}/${item.id}`)}
+                    onPress={() => router.push(`/(app)/garage/${id}/reminders/${item.id}`)}
                     activeOpacity={0.8}
                   >
                     <View style={[s.statusBar, { backgroundColor: overdue ? '#e3001b' : '#2196f3' }]} />

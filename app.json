@@ -1,7 +1,7 @@
 {
   "expo": {
     "scheme": "mxtracker",
-    "name": "mxtracker-expo",
+    "name": "MXTracker",
     "slug": "mxtracker-expo",
     "version": "1.0.0",
     "orientation": "portrait",

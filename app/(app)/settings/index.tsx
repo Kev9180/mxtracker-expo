@@ -15,6 +15,7 @@ import {
   Platform,
 } from 'react-native'
 import { useState, useEffect } from 'react'
+import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../../lib/supabase'
 import { Database } from '../../../types/database.types'
@@ -510,6 +511,9 @@ export default function SettingsScreen() {
 
       {/* Header */}
       <View style={s.header}>
+        <TouchableOpacity onPress={() => router.back()} style={s.backButton}>
+          <Ionicons name="arrow-back" size={24} color={dark ? '#fff' : '#111'} />
+        </TouchableOpacity>
         <Text style={s.headerTitle}>SETTINGS</Text>
         <Text style={s.headerSubtitle}>{userEmail}</Text>
       </View>
@@ -648,6 +652,7 @@ export default function SettingsScreen() {
 const styles = (dark: boolean) => StyleSheet.create({
   container: { flex: 1, backgroundColor: dark ? '#0f0f0f' : '#f5f5f0' },
   header: { paddingHorizontal: 24, paddingTop: 64, paddingBottom: 16 },
+  backButton: { marginBottom: 12 },
   headerTitle: { fontSize: 28, fontWeight: '900', letterSpacing: 4, color: dark ? '#fff' : '#111' },
   headerSubtitle: { fontSize: 11, fontWeight: '600', letterSpacing: 2, color: dark ? '#555' : '#999', marginTop: 4 },
   accentBar: { height: 2, backgroundColor: '#e3001b', marginHorizontal: 24, marginBottom: 16 },

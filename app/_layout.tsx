@@ -63,7 +63,7 @@ export default Sentry.wrap(function RootLayout() {
         if (recordId && vehicleId) {
           // Small delay to ensure navigation stack is ready
           setTimeout(() => {
-            router.push(`/(app)/reminders/${vehicleId}/${recordId}`)
+            router.push(`/(app)/garage/${vehicleId}/reminders/${recordId}`)
           }, 300)
         }
       })

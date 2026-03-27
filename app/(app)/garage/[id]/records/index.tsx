@@ -18,10 +18,10 @@ import * as Print from 'expo-print'
 import * as Sharing from 'expo-sharing'
 import * as Crypto from 'expo-crypto'
 import * as FileSystem from 'expo-file-system'
-import { supabase } from '../../../../lib/supabase'
-import { Database } from '../../../../types/database.types'
-import { useTheme } from '../../../../lib/ThemeContext'
-import { useProfile } from '../../../../lib/ProfileContext'
+import { supabase } from '../../../../../lib/supabase'
+import { Database } from '../../../../../types/database.types'
+import { useTheme } from '../../../../../lib/ThemeContext'
+import { useProfile } from '../../../../../lib/ProfileContext'
 
 type MaintenanceRecord = Database['public']['Tables']['maintenance_records']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
@@ -95,7 +95,7 @@ function StatusBadge({ dark }: { dark: boolean }) {
 }
 
 export default function VehicleRecordsScreen() {
-  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
+  const { id } = useLocalSearchParams<{ id: string }>()
   const { dark } = useTheme()
   const { profile } = useProfile()
   const s = styles(dark)
@@ -109,15 +109,15 @@ export default function VehicleRecordsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchData()
-    }, [vehicleId])
+    }, [id])
   )
 
   async function fetchData() {
     const [vehicleRes, recordsRes] = await Promise.all([
-      supabase.from('vehicles').select('*').eq('id', vehicleId).single(),
+      supabase.from('vehicles').select('*').eq('id', id).single(),
       supabase.from('maintenance_records')
         .select('*')
-        .eq('vehicle_id', vehicleId)
+        .eq('vehicle_id', id)
         .order('completed_date', { ascending: false }),
     ])
 
@@ -488,7 +488,7 @@ export default function VehicleRecordsScreen() {
           </View>
           <TouchableOpacity
             style={s.addButton}
-            onPress={() => router.push(`/(app)/records/${vehicleId}/new`)}
+            onPress={() => router.push(`/(app)/garage/${id}/records/new`)}
           >
             <Ionicons name="add" size={24} color="#fff" />
           </TouchableOpacity>
@@ -533,7 +533,7 @@ export default function VehicleRecordsScreen() {
                 <Swipeable renderRightActions={renderRightActions} overshootRight={false}>
                   <TouchableOpacity
                     style={s.card}
-                    onPress={() => router.push(`/(app)/records/${vehicleId}/${item.id}`)}
+                    onPress={() => router.push(`/(app)/garage/${id}/records/${item.id}`)}
                     activeOpacity={0.8}
                   >
                     <View style={s.cardTop}>
