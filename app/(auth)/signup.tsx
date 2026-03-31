@@ -113,7 +113,7 @@ export default function Signup() {
           <Text style={s.label}>DISPLAY NAME</Text>
           <TextInput
             style={s.input}
-            placeholder="Kevin"
+            placeholder="Preferred name, nickname, etc"
             placeholderTextColor={dark ? '#555' : '#aaa'}
             value={displayName}
             onChangeText={setDisplayName}
