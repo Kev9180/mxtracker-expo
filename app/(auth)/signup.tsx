@@ -53,11 +53,9 @@ export default function Signup() {
     const trimmedDisplayName = displayName.trim()
 
     const webBaseUrl = (process.env.EXPO_PUBLIC_WEB_URL || '').replace(/\/$/, '')
-    const webRedirect = webBaseUrl
-      ? `${webBaseUrl}/login`
-      : (typeof window !== 'undefined' && window.location?.origin ? `${window.location.origin}/login` : 'https://mxtracker.app/login')
-
-    const emailRedirectTo = Platform.OS === 'web' ? webRedirect : 'mxtracker://login'
+    const emailRedirectTo = Platform.OS === 'web'
+      ? (webBaseUrl ? `${webBaseUrl}/login` : `${window.location.origin}/login`)
+      : 'mxtracker://login'
 
     const { error } = await supabase.auth.signUp({
       email: trimmedEmail,

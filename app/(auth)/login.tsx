@@ -40,7 +40,11 @@ export default function Login() {
       Alert.alert('Enter your email', 'Please enter your email address first, then tap Forgot Password.')
       return
     }
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim())
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: Platform.OS === 'web'
+        ? `${(process.env.EXPO_PUBLIC_WEB_URL || '').replace(/\/$/, '') || window.location.origin}/login`
+        : 'mxtracker://login',
+    })
     if (error) {
       Alert.alert('Error', error.message)
     } else {
