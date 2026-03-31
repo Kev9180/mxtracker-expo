@@ -79,6 +79,8 @@ export default function Login() {
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
+            returnKeyType="next"
+            onSubmitEditing={() => {}}
           />
 
           <Text style={s.label}>PASSWORD</Text>
@@ -90,6 +92,8 @@ export default function Login() {
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="password"
+            returnKeyType="go"
+            onSubmitEditing={handleLogin}
           />
 
           <TouchableOpacity onPress={handleForgotPassword} style={{ alignSelf: 'flex-end', marginBottom: 24 }}>
