@@ -40,7 +40,11 @@ export default function Login() {
       Alert.alert('Enter your email', 'Please enter your email address first, then tap Forgot Password.')
       return
     }
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim())
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: Platform.OS === 'web'
+        ? `${(process.env.EXPO_PUBLIC_WEB_URL || '').replace(/\/$/, '') || window.location.origin}/login`
+        : 'mxtracker://login',
+    })
     if (error) {
       Alert.alert('Error', error.message)
     } else {
@@ -75,6 +79,8 @@ export default function Login() {
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
+            returnKeyType="next"
+            onSubmitEditing={() => {}}
           />
 
           <Text style={s.label}>PASSWORD</Text>
@@ -86,6 +92,8 @@ export default function Login() {
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="password"
+            returnKeyType="go"
+            onSubmitEditing={handleLogin}
           />
 
           <TouchableOpacity onPress={handleForgotPassword} style={{ alignSelf: 'flex-end', marginBottom: 24 }}>

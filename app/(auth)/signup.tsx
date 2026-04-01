@@ -10,7 +10,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useTheme } from '../../lib/ThemeContext'
@@ -25,6 +25,10 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+
+  const emailRef = useRef<TextInput>(null)
+  const passwordRef = useRef<TextInput>(null)
+  const confirmPasswordRef = useRef<TextInput>(null)
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -53,11 +57,9 @@ export default function Signup() {
     const trimmedDisplayName = displayName.trim()
 
     const webBaseUrl = (process.env.EXPO_PUBLIC_WEB_URL || '').replace(/\/$/, '')
-    const webRedirect = webBaseUrl
-      ? `${webBaseUrl}/login`
-      : (typeof window !== 'undefined' && window.location?.origin ? `${window.location.origin}/login` : 'https://mxtracker.app/login')
-
-    const emailRedirectTo = Platform.OS === 'web' ? webRedirect : 'mxtracker://login'
+    const emailRedirectTo = Platform.OS === 'web'
+      ? (webBaseUrl ? `${webBaseUrl}/login` : `${window.location.origin}/login`)
+      : 'mxtracker://login'
 
     const { error } = await supabase.auth.signUp({
       email: trimmedEmail,
@@ -115,16 +117,19 @@ export default function Signup() {
           <Text style={s.label}>DISPLAY NAME</Text>
           <TextInput
             style={s.input}
-            placeholder="Kevin"
-            placeholderTextColor={dark ? '#555' : '#888'}
+            placeholder="Preferred name, nickname, etc"
+            placeholderTextColor={dark ? '#555' : '#aaa'}
             value={displayName}
             onChangeText={setDisplayName}
             autoCapitalize="words"
             autoComplete="name"
+            returnKeyType="next"
+            onSubmitEditing={() => emailRef.current?.focus()}
           />
 
           <Text style={s.label}>EMAIL</Text>
           <TextInput
+            ref={emailRef}
             style={s.input}
             placeholder="your@email.com"
             placeholderTextColor={dark ? '#555' : '#888'}
@@ -133,10 +138,13 @@ export default function Signup() {
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
           />
 
           <Text style={s.label}>PASSWORD</Text>
           <TextInput
+            ref={passwordRef}
             style={s.input}
             placeholder="Min. 8 characters"
             placeholderTextColor={dark ? '#555' : '#888'}
@@ -146,10 +154,13 @@ export default function Signup() {
             autoComplete="new-password"
             textContentType="newPassword"
             passwordRules="minlength: 8;"
+            returnKeyType="next"
+            onSubmitEditing={() => confirmPasswordRef.current?.focus()}
           />
 
           <Text style={s.label}>CONFIRM PASSWORD</Text>
           <TextInput
+            ref={confirmPasswordRef}
             style={s.input}
             placeholder="••••••••"
             placeholderTextColor={dark ? '#555' : '#888'}
@@ -158,6 +169,8 @@ export default function Signup() {
             secureTextEntry
             autoComplete="new-password"
             textContentType="newPassword"
+            returnKeyType="go"
+            onSubmitEditing={handleSignup}
           />
 
           <TouchableOpacity
