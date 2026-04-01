@@ -15,10 +15,10 @@ import {
 import { useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { supabase } from '../../../../lib/supabase'
-import { useTheme } from '../../../../lib/ThemeContext'
-import { useProfile } from '../../../../lib/ProfileContext'
-import { registerForPushNotificationsAsync } from '../../../../lib/notifications'
+import { supabase } from '../../../../../lib/supabase'
+import { useTheme } from '../../../../../lib/ThemeContext'
+import { useProfile } from '../../../../../lib/ProfileContext'
+import { registerForPushNotificationsAsync } from '../../../../../lib/notifications'
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -42,9 +42,9 @@ function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapi
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={dark ? '#444' : '#bbb'}
-        keyboardType={keyboardType ?? 'default'}
-        autoCapitalize={autoCapitalize ?? 'sentences'}
+        placeholderTextColor={dark ? '#444' : '#999'}
+        keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
         maxLength={maxLength}
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}
@@ -131,9 +131,9 @@ function DatePickerModal({ visible, value, onConfirm, onCancel, dark }: {
 // ── Main Component ─────────────────────────────────────────────
 
 export default function NewRecord() {
-  const { vehicleId, prefillTaskName, prefillDate, fromReminderId } =
+  const { id, prefillTaskName, prefillDate, fromReminderId } =
     useLocalSearchParams<{
-      vehicleId: string
+      id: string
       prefillTaskName?: string
       prefillDate?: string
       fromReminderId?: string
@@ -233,7 +233,7 @@ export default function NewRecord() {
     }
 
     const { error } = await supabase.from('maintenance_records').insert({
-      vehicle_id: vehicleId,
+      vehicle_id: id,
       user_id: user.id,
       task_name: taskName.trim(),
       completed_date: completedDate,
@@ -283,7 +283,7 @@ export default function NewRecord() {
 
       {/* Header */}
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.push(`/(app)/records/${vehicleId}`)} style={s.backButton}>
+        <TouchableOpacity onPress={() => router.back()} style={s.backButton}>
           <Ionicons name="arrow-back" size={24} color={dark ? '#fff' : '#111'} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>{fromReminderId ? 'LOG SERVICE' : 'ADD RECORD'}</Text>
@@ -323,13 +323,13 @@ export default function NewRecord() {
             style={[s.input, s.dateButton]}
             onPress={() => setShowDatePicker(true)}
           >
-            <Text style={{ color: completedDate ? (dark ? '#fff' : '#111') : (dark ? '#444' : '#bbb'), fontSize: 15 }}>
+            <Text style={{ color: completedDate ? (dark ? '#fff' : '#111') : (dark ? '#444' : '#999'), fontSize: 15 }}>
               {completedDate ? (() => {
                 const [y, m, d] = completedDate.split('-')
                 return `${MONTHS[parseInt(m) - 1]} ${parseInt(d)}, ${y}`
               })() : 'Select service date'}
             </Text>
-            <Ionicons name="calendar-outline" size={16} color={dark ? '#555' : '#aaa'} />
+            <Ionicons name="calendar-outline" size={16} color={dark ? '#777' : '#555'} />
           </TouchableOpacity>
         </View>
 
@@ -386,7 +386,7 @@ export default function NewRecord() {
           <Switch
             value={reminderEnabled}
             onValueChange={handleReminderToggle}
-            trackColor={{ false: dark ? '#2a2a2a' : '#e0e0e0', true: '#e3001b' }}
+            trackColor={{ false: dark ? '#2a2a2a' : '#c0c0c0', true: '#e3001b' }}
             thumbColor="#fff"
           />
         </View>
@@ -399,7 +399,7 @@ export default function NewRecord() {
             />
             <Text style={[
               s.channelHintText,
-              { color: profile?.push_notifications_enabled || profile?.reminders_enabled ? (dark ? '#555' : '#888') : '#f0a500' }
+              { color: profile?.push_notifications_enabled || profile?.reminders_enabled ? (dark ? '#777' : '#555') : '#f0a500' }
             ]}>{getReminderChannelHint()}</Text>
           </View>
         )}
@@ -415,7 +415,7 @@ export default function NewRecord() {
                   value={intervalYears}
                   onChangeText={v => setIntervalYears(v.replace(/[^0-9]/g, ''))}
                   placeholder="0"
-                  placeholderTextColor={dark ? '#444' : '#bbb'}
+                  placeholderTextColor={dark ? '#444' : '#999'}
                   keyboardType="numeric"
                   maxLength={2}
                 />
@@ -427,7 +427,7 @@ export default function NewRecord() {
                   value={intervalMonths}
                   onChangeText={v => setIntervalMonths(v.replace(/[^0-9]/g, ''))}
                   placeholder="0"
-                  placeholderTextColor={dark ? '#444' : '#bbb'}
+                  placeholderTextColor={dark ? '#444' : '#999'}
                   keyboardType="numeric"
                   maxLength={2}
                 />
@@ -439,7 +439,7 @@ export default function NewRecord() {
                   value={intervalDays}
                   onChangeText={v => setIntervalDays(v.replace(/[^0-9]/g, ''))}
                   placeholder="0"
-                  placeholderTextColor={dark ? '#444' : '#bbb'}
+                  placeholderTextColor={dark ? '#444' : '#999'}
                   keyboardType="numeric"
                   maxLength={3}
                 />
@@ -488,7 +488,7 @@ const styles = (dark: boolean) => StyleSheet.create({
 
   // Fields
   fieldContainer: { gap: 6 },
-  label: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999' },
+  label: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#777' : '#666' },
   input: {
     height: 48, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8',
     backgroundColor: dark ? '#111' : '#fafafa', color: dark ? '#fff' : '#111',
@@ -512,7 +512,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     color: dark ? '#fff' : '#111',
   },
   reminderSubtitle: {
-    fontSize: 11, color: dark ? '#555' : '#aaa',
+    fontSize: 11, color: dark ? '#888' : '#555',
     letterSpacing: 0.5, marginTop: 2,
   },
   channelHint: {
@@ -528,7 +528,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   intervalTitle: {
     fontSize: 10, fontWeight: '700', letterSpacing: 2,
-    color: dark ? '#666' : '#999',
+    color: dark ? '#777' : '#666',
   },
   intervalRow: { flexDirection: 'row', gap: 12 },
   intervalField: { flex: 1, gap: 6, alignItems: 'center' },
@@ -541,7 +541,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   intervalLabel: {
     fontSize: 9, fontWeight: '800', letterSpacing: 2,
-    color: dark ? '#555' : '#aaa',
+    color: dark ? '#888' : '#555',
   },
   nextDueContainer: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -549,7 +549,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   nextDueText: {
     fontSize: 12, fontWeight: '600', letterSpacing: 0.5,
-    color: dark ? '#666' : '#888',
+    color: dark ? '#777' : '#555',
   },
   nextDueDate: { color: '#e3001b', fontWeight: '800' },
 
@@ -568,7 +568,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   pickerRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   pickerColumn: { flex: 2 },
   pickerColumnSmall: { flex: 1 },
-  pickerLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999', marginBottom: 8 },
+  pickerLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#777' : '#666', marginBottom: 8 },
   pickerScroll: { height: 200, borderWidth: 1, borderColor: dark ? '#2a2a2a' : '#e8e8e8' },
   pickerItem: { paddingVertical: 10, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: dark ? '#2a2a2a' : '#f0f0f0' },
   pickerItemActive: { backgroundColor: '#e3001b' },
@@ -576,7 +576,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   pickerItemTextActive: { color: '#fff', fontWeight: '800' },
   modalButtons: { flexDirection: 'row', gap: 12 },
   modalCancelButton: { flex: 1, height: 48, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8', alignItems: 'center', justifyContent: 'center' },
-  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#555' : '#999' },
+  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#888' : '#666' },
   modalConfirmButton: { flex: 1, height: 48, backgroundColor: '#e3001b', alignItems: 'center', justifyContent: 'center' },
   modalConfirmText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: '#fff' },
 

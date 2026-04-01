@@ -92,7 +92,7 @@ export default function GarageScreen() {
             <View style={s.statsRow}>
               {vehicle.current_mileage ? (
                 <View style={s.stat}>
-                  <Ionicons name="speedometer-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                  <Ionicons name="speedometer-outline" size={12} color={dark ? '#888' : '#555'} />
                   <Text style={s.statText}>
                     {vehicle.current_mileage.toLocaleString()} {profile?.odometer_unit === 'kilometers' ? 'km' : 'mi'}
                   </Text>
@@ -100,13 +100,13 @@ export default function GarageScreen() {
               ) : null}
               {vehicle.fuel_type ? (
                 <View style={s.stat}>
-                  <Ionicons name="flame-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                  <Ionicons name="flame-outline" size={12} color={dark ? '#888' : '#555'} />
                   <Text style={s.statText}>{vehicle.fuel_type}</Text>
                 </View>
               ) : null}
               {vehicle.drive ? (
                 <View style={s.stat}>
-                  <Ionicons name="git-network-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                  <Ionicons name="git-network-outline" size={12} color={dark ? '#888' : '#555'} />
                   <Text style={s.statText}>{vehicle.drive}</Text>
                 </View>
               ) : null}
@@ -172,10 +172,10 @@ export default function GarageScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            style={s.addButton}
-            onPress={() => router.push('/(app)/garage/new')}
+            style={s.settingsButton}
+            onPress={() => router.push('/(app)/settings')}
           >
-            <Ionicons name="add" size={24} color="#fff" />
+            <Ionicons name="settings-outline" size={24} color={dark ? '#fff' : '#111'} />
           </TouchableOpacity>
         </View>
 
@@ -188,6 +188,16 @@ export default function GarageScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <VehicleCard vehicle={item} />}
           ListEmptyComponent={<EmptyState />}
+          ListFooterComponent={
+            <TouchableOpacity
+              style={s.addVehicleButton}
+              onPress={() => router.push('/(app)/garage/new')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add" size={20} color="#fff" />
+              <Text style={s.addVehicleButtonText}>ADD NEW VEHICLE</Text>
+            </TouchableOpacity>
+          }
           contentContainerStyle={s.listContent}
           refreshControl={
             <RefreshControl
@@ -228,13 +238,12 @@ const styles = (dark: boolean) => StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 3,
-    color: dark ? '#555' : '#999',
+    color: dark ? '#888' : '#666',
     marginTop: 2,
   },
-  addButton: {
+  settingsButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#e3001b',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -250,6 +259,23 @@ const styles = (dark: boolean) => StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 32,
     flexGrow: 1,
+  },
+
+  // Add New Vehicle button
+  addVehicleButton: {
+    backgroundColor: '#e3001b',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 52,
+    marginTop: 8,
+    gap: 8,
+  },
+  addVehicleButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 3,
   },
 
   // Card
@@ -289,8 +315,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   vehicleSubtitle: {
     fontSize: 13,
-    color: dark ? '#555' : '#999',
-    marginTop: 4,
+    color: dark ? '#888' : '#666',
     letterSpacing: 0.5,
   },
   divider: {
@@ -309,7 +334,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   statText: {
     fontSize: 11,
-    color: dark ? '#555' : '#aaa',
+    color: dark ? '#888' : '#555',
     fontWeight: '600',
     letterSpacing: 0.5,
   },
@@ -330,7 +355,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 13,
-    color: dark ? '#333' : '#bbb',
+    color: dark ? '#555' : '#777',
     letterSpacing: 1,
   },
 

@@ -13,9 +13,9 @@ import {
 import { useState, useCallback } from 'react'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { supabase } from '../../../lib/supabase'
-import { Database } from '../../../types/database.types'
-import { useTheme } from '../../../lib/ThemeContext'
+import { supabase } from '../../../../../lib/supabase'
+import { Database } from '../../../../../types/database.types'
+import { useTheme } from '../../../../../lib/ThemeContext'
 
 type MaintenanceRecord = Database['public']['Tables']['maintenance_records']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
@@ -34,7 +34,7 @@ function isOverdue(dateStr: string | null | undefined): boolean {
 }
 
 export default function VehicleRemindersScreen() {
-  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
+  const { id } = useLocalSearchParams<{ id: string }>()
   const { dark } = useTheme()
   const s = styles(dark)
 
@@ -46,15 +46,15 @@ export default function VehicleRemindersScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchData()
-    }, [vehicleId])
+    }, [id])
   )
 
   async function fetchData() {
     const [vehicleRes, remindersRes] = await Promise.all([
-      supabase.from('vehicles').select('*').eq('id', vehicleId).single(),
+      supabase.from('vehicles').select('*').eq('id', id).single(),
       supabase.from('maintenance_records')
         .select('*')
-        .eq('vehicle_id', vehicleId)
+        .eq('vehicle_id', id)
         .eq('reminder_enabled', true)
         .order('next_due_date', { ascending: true }),
     ])
@@ -157,7 +157,7 @@ export default function VehicleRemindersScreen() {
                 <Swipeable renderRightActions={renderRightActions} overshootRight={false}>
                   <TouchableOpacity
                     style={s.card}
-                    onPress={() => router.push(`/(app)/reminders/${vehicleId}/${item.id}`)}
+                    onPress={() => router.push(`/(app)/garage/${id}/reminders/${item.id}`)}
                     activeOpacity={0.8}
                   >
                     <View style={[s.statusBar, { backgroundColor: overdue ? '#e3001b' : '#2196f3' }]} />
@@ -174,7 +174,7 @@ export default function VehicleRemindersScreen() {
                         <Ionicons
                           name="calendar-outline"
                           size={12}
-                          color={overdue ? '#e3001b' : (dark ? '#555' : '#aaa')}
+                          color={overdue ? '#e3001b' : (dark ? '#888' : '#555')}
                         />
                         <Text style={[s.dueDateText, overdue && s.dueDateOverdue]}>
                           {overdue ? 'Was due ' : 'Due '}{formatDate(item.next_due_date)}
@@ -200,7 +200,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   backButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 14, fontWeight: '900', letterSpacing: 2, color: dark ? '#fff' : '#111' },
-  headerSubtitle: { fontSize: 11, fontWeight: '600', letterSpacing: 3, color: dark ? '#555' : '#999', marginTop: 2 },
+  headerSubtitle: { fontSize: 11, fontWeight: '600', letterSpacing: 3, color: dark ? '#888' : '#666', marginTop: 2 },
   accentBar: { height: 2, backgroundColor: '#e3001b', marginHorizontal: 24, marginBottom: 16 },
   listContent: { paddingHorizontal: 24, paddingBottom: 32 },
   card: {
@@ -224,7 +224,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   dueDateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   dueDateText: {
     fontSize: 11, fontWeight: '600', letterSpacing: 0.5,
-    color: dark ? '#555' : '#aaa',
+    color: dark ? '#888' : '#555',
   },
   dueDateOverdue: { color: '#e3001b' },
   deleteAction: {
@@ -235,5 +235,5 @@ const styles = (dark: boolean) => StyleSheet.create({
   deleteActionText: { color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 2, marginTop: 4 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   emptyTitle: { fontSize: 16, fontWeight: '800', letterSpacing: 4, color: dark ? '#2a2a2a' : '#ccc' },
-  emptySubtitle: { fontSize: 13, color: dark ? '#333' : '#bbb', letterSpacing: 1, textAlign: 'center', paddingHorizontal: 40 },
+  emptySubtitle: { fontSize: 13, color: dark ? '#555' : '#777', letterSpacing: 1, textAlign: 'center', paddingHorizontal: 40 },
 })

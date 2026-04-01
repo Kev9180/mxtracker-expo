@@ -18,10 +18,10 @@ import * as Print from 'expo-print'
 import * as Sharing from 'expo-sharing'
 import * as Crypto from 'expo-crypto'
 import * as FileSystem from 'expo-file-system'
-import { supabase } from '../../../../lib/supabase'
-import { Database } from '../../../../types/database.types'
-import { useTheme } from '../../../../lib/ThemeContext'
-import { useProfile } from '../../../../lib/ProfileContext'
+import { supabase } from '../../../../../lib/supabase'
+import { Database } from '../../../../../types/database.types'
+import { useTheme } from '../../../../../lib/ThemeContext'
+import { useProfile } from '../../../../../lib/ProfileContext'
 
 type MaintenanceRecord = Database['public']['Tables']['maintenance_records']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
@@ -95,7 +95,7 @@ function StatusBadge({ dark }: { dark: boolean }) {
 }
 
 export default function VehicleRecordsScreen() {
-  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>()
+  const { id } = useLocalSearchParams<{ id: string }>()
   const { dark } = useTheme()
   const { profile } = useProfile()
   const s = styles(dark)
@@ -109,15 +109,15 @@ export default function VehicleRecordsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchData()
-    }, [vehicleId])
+    }, [id])
   )
 
   async function fetchData() {
     const [vehicleRes, recordsRes] = await Promise.all([
-      supabase.from('vehicles').select('*').eq('id', vehicleId).single(),
+      supabase.from('vehicles').select('*').eq('id', id).single(),
       supabase.from('maintenance_records')
         .select('*')
-        .eq('vehicle_id', vehicleId)
+        .eq('vehicle_id', id)
         .order('completed_date', { ascending: false }),
     ])
 
@@ -488,7 +488,7 @@ export default function VehicleRecordsScreen() {
           </View>
           <TouchableOpacity
             style={s.addButton}
-            onPress={() => router.push(`/(app)/records/${vehicleId}/new`)}
+            onPress={() => router.push(`/(app)/garage/${id}/records/new`)}
           >
             <Ionicons name="add" size={24} color="#fff" />
           </TouchableOpacity>
@@ -533,7 +533,7 @@ export default function VehicleRecordsScreen() {
                 <Swipeable renderRightActions={renderRightActions} overshootRight={false}>
                   <TouchableOpacity
                     style={s.card}
-                    onPress={() => router.push(`/(app)/records/${vehicleId}/${item.id}`)}
+                    onPress={() => router.push(`/(app)/garage/${id}/records/${item.id}`)}
                     activeOpacity={0.8}
                   >
                     <View style={s.cardTop}>
@@ -542,7 +542,7 @@ export default function VehicleRecordsScreen() {
                     </View>
                     <View style={s.cardBottom}>
                       <View style={s.cardMeta}>
-                        <Ionicons name="calendar-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                        <Ionicons name="calendar-outline" size={12} color={dark ? '#888' : '#555'} />
                         <Text style={s.cardMetaText}>
                           {item.completed_date
                             ? formatDate(item.completed_date)
@@ -599,7 +599,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 11, fontWeight: '600', letterSpacing: 3,
-    color: dark ? '#555' : '#999', marginTop: 2,
+    color: dark ? '#888' : '#666', marginTop: 2,
   },
   addButton: {
     width: 44, height: 44, backgroundColor: '#e3001b',
@@ -626,7 +626,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   sectionHeaderText: {
     fontSize: 11, fontWeight: '800', letterSpacing: 3,
-    color: dark ? '#555' : '#999',
+    color: dark ? '#888' : '#666',
   },
   card: {
     backgroundColor: dark ? '#1a1a1a' : '#fff',
@@ -645,7 +645,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   cardMetaText: {
     fontSize: 11, fontWeight: '600', letterSpacing: 0.5,
-    color: dark ? '#555' : '#aaa',
+    color: dark ? '#888' : '#555',
   },
   badge: {
     paddingHorizontal: 8, paddingVertical: 3,
@@ -658,7 +658,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     fontSize: 16, fontWeight: '800', letterSpacing: 4,
     color: dark ? '#2a2a2a' : '#ccc',
   },
-  emptySubtitle: { fontSize: 13, color: dark ? '#333' : '#bbb', letterSpacing: 1 },
+  emptySubtitle: { fontSize: 13, color: dark ? '#555' : '#777', letterSpacing: 1 },
   deleteAction: {
     backgroundColor: '#e3001b',
     justifyContent: 'center',

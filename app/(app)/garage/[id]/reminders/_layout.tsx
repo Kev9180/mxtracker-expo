@@ -1,9 +1,8 @@
 import { Stack } from 'expo-router'
-import { useTheme } from '../../lib/ThemeContext'
+import { useTheme } from '../../../../../lib/ThemeContext'
 
-export default function AppLayout() {
+export default function RemindersLayout() {
   const { dark } = useTheme()
-
   return (
     <Stack
       screenOptions={{

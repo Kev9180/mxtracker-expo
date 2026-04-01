@@ -101,7 +101,7 @@ function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapi
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={dark ? '#444' : '#bbb'}
+        placeholderTextColor={dark ? '#444' : '#999'}
         keyboardType={keyboardType ?? 'default'}
         autoCapitalize={autoCapitalize ?? 'words'}
         maxLength={maxLength}
@@ -152,7 +152,7 @@ function SectionHeader({ title, isOpen, onToggle, count, dark }: {
         <Text style={s.sectionTitle}>{title}</Text>
         {count ? <Text style={s.sectionCount}>{count} filled</Text> : null}
       </View>
-      <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={16} color={dark ? '#555' : '#999'} />
+      <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={16} color={dark ? '#777' : '#666'} />
     </TouchableOpacity>
   )
 }
@@ -404,13 +404,13 @@ export default function NewVehicle() {
               <View style={s.fieldContainer}>
                 <Text style={s.label}>PURCHASE DATE</Text>
                 <TouchableOpacity style={[s.input, s.dateButton]} onPress={() => setShowDatePicker(true)}>
-                  <Text style={{ color: form.purchase_date ? (dark ? '#fff' : '#111') : (dark ? '#444' : '#bbb'), fontSize: 15 }}>
+                  <Text style={{ color: form.purchase_date ? (dark ? '#fff' : '#111') : (dark ? '#444' : '#999'), fontSize: 15 }}>
                     {form.purchase_date ? (() => {
                       const [y, m, d] = form.purchase_date.split('-')
                       return `${MONTHS[parseInt(m) - 1]} ${parseInt(d)}, ${y}`
                     })() : 'Select a date'}
                   </Text>
-                  <Ionicons name="calendar-outline" size={16} color={dark ? '#555' : '#aaa'} />
+                  <Ionicons name="calendar-outline" size={16} color={dark ? '#777' : '#555'} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -442,13 +442,13 @@ const styles = (dark: boolean) => StyleSheet.create({
   sectionCount: { fontSize: 10, fontWeight: '600', letterSpacing: 1, color: '#e3001b' },
   sectionBody: { padding: 16, gap: 16, borderTopWidth: 1, borderTopColor: dark ? '#2a2a2a' : '#f0f0f0' },
   fieldContainer: { gap: 6 },
-  label: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999' },
+  label: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#777' : '#666' },
   input: { height: 48, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8', backgroundColor: dark ? '#111' : '#fafafa', color: dark ? '#fff' : '#111', paddingHorizontal: 14, fontSize: 15 },
   dateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   optionChip: { paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8', backgroundColor: dark ? '#111' : '#fafafa' },
   optionChipActive: { borderColor: '#e3001b', backgroundColor: '#e3001b' },
-  optionChipText: { fontSize: 12, fontWeight: '700', letterSpacing: 1, color: dark ? '#666' : '#999' },
+  optionChipText: { fontSize: 12, fontWeight: '700', letterSpacing: 1, color: dark ? '#777' : '#666' },
   optionChipTextActive: { color: '#fff' },
   submitButton: { height: 52, backgroundColor: '#e3001b', alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   submitButtonDisabled: { opacity: 0.6 },
@@ -459,7 +459,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   pickerRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   pickerColumn: { flex: 2 },
   pickerColumnSmall: { flex: 1 },
-  pickerLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999', marginBottom: 8 },
+  pickerLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#777' : '#666', marginBottom: 8 },
   pickerScroll: { height: 200, borderWidth: 1, borderColor: dark ? '#2a2a2a' : '#e8e8e8' },
   pickerItem: { paddingVertical: 10, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: dark ? '#2a2a2a' : '#f0f0f0' },
   pickerItemActive: { backgroundColor: '#e3001b' },
@@ -467,7 +467,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   pickerItemTextActive: { color: '#fff', fontWeight: '800' },
   modalButtons: { flexDirection: 'row', gap: 12 },
   modalCancelButton: { flex: 1, height: 48, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8', alignItems: 'center', justifyContent: 'center' },
-  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#555' : '#999' },
+  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#888' : '#666' },
   modalConfirmButton: { flex: 1, height: 48, backgroundColor: '#e3001b', alignItems: 'center', justifyContent: 'center' },
   modalConfirmText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: '#fff' },
 })
