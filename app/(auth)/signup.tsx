@@ -116,7 +116,7 @@ export default function Signup() {
           <TextInput
             style={s.input}
             placeholder="Kevin"
-            placeholderTextColor={dark ? '#555' : '#aaa'}
+            placeholderTextColor={dark ? '#555' : '#888'}
             value={displayName}
             onChangeText={setDisplayName}
             autoCapitalize="words"
@@ -127,7 +127,7 @@ export default function Signup() {
           <TextInput
             style={s.input}
             placeholder="your@email.com"
-            placeholderTextColor={dark ? '#555' : '#aaa'}
+            placeholderTextColor={dark ? '#555' : '#888'}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -139,7 +139,7 @@ export default function Signup() {
           <TextInput
             style={s.input}
             placeholder="Min. 8 characters"
-            placeholderTextColor={dark ? '#555' : '#aaa'}
+            placeholderTextColor={dark ? '#555' : '#888'}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -152,7 +152,7 @@ export default function Signup() {
           <TextInput
             style={s.input}
             placeholder="••••••••"
-            placeholderTextColor={dark ? '#555' : '#aaa'}
+            placeholderTextColor={dark ? '#555' : '#888'}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
@@ -238,7 +238,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
     letterSpacing: 4,
-    color: dark ? '#555' : '#999',
+    color: dark ? '#888' : '#666',
     marginTop: 4,
   },
 
@@ -250,7 +250,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 3,
-    color: dark ? '#666' : '#888',
+    color: dark ? '#777' : '#666',
     marginTop: 8,
     marginBottom: 2,
   },
@@ -294,7 +294,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    color: dark ? '#555' : '#999',
+    color: dark ? '#888' : '#666',
     fontSize: 13,
   },
   footerLink: {

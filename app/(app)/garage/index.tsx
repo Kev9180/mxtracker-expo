@@ -92,7 +92,7 @@ export default function GarageScreen() {
             <View style={s.statsRow}>
               {vehicle.current_mileage ? (
                 <View style={s.stat}>
-                  <Ionicons name="speedometer-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                  <Ionicons name="speedometer-outline" size={12} color={dark ? '#888' : '#555'} />
                   <Text style={s.statText}>
                     {vehicle.current_mileage.toLocaleString()} {profile?.odometer_unit === 'kilometers' ? 'km' : 'mi'}
                   </Text>
@@ -100,13 +100,13 @@ export default function GarageScreen() {
               ) : null}
               {vehicle.fuel_type ? (
                 <View style={s.stat}>
-                  <Ionicons name="flame-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                  <Ionicons name="flame-outline" size={12} color={dark ? '#888' : '#555'} />
                   <Text style={s.statText}>{vehicle.fuel_type}</Text>
                 </View>
               ) : null}
               {vehicle.drive ? (
                 <View style={s.stat}>
-                  <Ionicons name="git-network-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                  <Ionicons name="git-network-outline" size={12} color={dark ? '#888' : '#555'} />
                   <Text style={s.statText}>{vehicle.drive}</Text>
                 </View>
               ) : null}
@@ -238,7 +238,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 3,
-    color: dark ? '#555' : '#999',
+    color: dark ? '#888' : '#666',
     marginTop: 2,
   },
   settingsButton: {
@@ -315,8 +315,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   vehicleSubtitle: {
     fontSize: 13,
-    color: dark ? '#555' : '#999',
-    marginTop: 4,
+    color: dark ? '#888' : '#666',
     letterSpacing: 0.5,
   },
   divider: {
@@ -335,7 +334,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   statText: {
     fontSize: 11,
-    color: dark ? '#555' : '#aaa',
+    color: dark ? '#888' : '#555',
     fontWeight: '600',
     letterSpacing: 0.5,
   },
@@ -356,7 +355,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 13,
-    color: dark ? '#333' : '#bbb',
+    color: dark ? '#555' : '#777',
     letterSpacing: 1,
   },
 

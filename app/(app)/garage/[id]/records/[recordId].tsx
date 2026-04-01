@@ -97,9 +97,7 @@ function EditField({ label, value, onChangeText, placeholder, keyboardType, auto
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={dark ? '#444' : '#bbb'}
-        keyboardType={keyboardType ?? 'default'}
-        autoCapitalize={autoCapitalize ?? 'sentences'}
+        placeholderTextColor={dark ? '#444' : '#999'}
         maxLength={maxLength}
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}
@@ -352,7 +350,7 @@ export default function RecordDetail() {
         <View style={s.sectionBody}>
           <View style={s.readRow}>
             <Text style={s.readLabel}>STATUS</Text>
-            <Text style={[s.readValue, { color: record.reminder_enabled ? '#4caf50' : (dark ? '#555' : '#aaa') }]}>
+            <Text style={[s.readValue, { color: record.reminder_enabled ? '#4caf50' : (dark ? '#888' : '#555') }]}>
               {record.reminder_enabled ? 'ENABLED' : 'DISABLED'}
             </Text>
           </View>
@@ -396,10 +394,10 @@ export default function RecordDetail() {
             <View style={s.fieldContainer}>
               <Text style={s.fieldLabel}>SERVICE DATE *</Text>
               <TouchableOpacity style={[s.input, s.dateButton]} onPress={() => setShowDatePicker(true)}>
-                <Text style={{ color: form.completed_date ? (dark ? '#fff' : '#111') : (dark ? '#444' : '#bbb'), fontSize: 15 }}>
+                <Text style={{ color: form.completed_date ? (dark ? '#fff' : '#111') : (dark ? '#444' : '#999'), fontSize: 15 }}>
                   {form.completed_date ? formatDate(form.completed_date) : 'Select service date'}
                 </Text>
-                <Ionicons name="calendar-outline" size={16} color={dark ? '#555' : '#aaa'} />
+                <Ionicons name="calendar-outline" size={16} color={dark ? '#777' : '#555'} />
               </TouchableOpacity>
             </View>
 
@@ -421,7 +419,7 @@ export default function RecordDetail() {
               <Switch
                 value={form.reminder_enabled}
                 onValueChange={v => setField('reminder_enabled', v)}
-                trackColor={{ false: dark ? '#2a2a2a' : '#e0e0e0', true: '#e3001b' }}
+                trackColor={{ false: dark ? '#2a2a2a' : '#c0c0c0', true: '#e3001b' }}
                 thumbColor="#fff"
               />
             </View>
@@ -436,7 +434,7 @@ export default function RecordDetail() {
                       value={form.interval_years}
                       onChangeText={v => setField('interval_years', v.replace(/[^0-9]/g, ''))}
                       placeholder="0"
-                      placeholderTextColor={dark ? '#444' : '#bbb'}
+                      placeholderTextColor={dark ? '#444' : '#999'}
                       keyboardType="numeric"
                       maxLength={2}
                     />
@@ -448,7 +446,7 @@ export default function RecordDetail() {
                       value={form.interval_months}
                       onChangeText={v => setField('interval_months', v.replace(/[^0-9]/g, ''))}
                       placeholder="0"
-                      placeholderTextColor={dark ? '#444' : '#bbb'}
+                      placeholderTextColor={dark ? '#444' : '#999'}
                       keyboardType="numeric"
                       maxLength={2}
                     />
@@ -460,7 +458,7 @@ export default function RecordDetail() {
                       value={form.interval_days}
                       onChangeText={v => setField('interval_days', v.replace(/[^0-9]/g, ''))}
                       placeholder="0"
-                      placeholderTextColor={dark ? '#444' : '#bbb'}
+                      placeholderTextColor={dark ? '#444' : '#999'}
                       keyboardType="numeric"
                       maxLength={3}
                     />
@@ -523,7 +521,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     color: dark ? '#fff' : '#111', textAlign: 'center',
   },
   headerAction: { fontSize: 12, fontWeight: '800', letterSpacing: 2, color: '#e3001b', textAlign: 'right' },
-  headerActionCancel: { color: dark ? '#666' : '#999' },
+  headerActionCancel: { color: dark ? '#777' : '#666' },
   accentBar: { height: 2, backgroundColor: '#e3001b', marginHorizontal: 24, marginBottom: 24 },
   accentBarSmall: { height: 2, backgroundColor: '#e3001b', marginBottom: 20 },
   scroll: { flex: 1 },
@@ -542,10 +540,10 @@ const styles = (dark: boolean) => StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
     paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: dark ? '#1f1f1f' : '#f8f8f8',
   },
-  readLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, color: dark ? '#555' : '#aaa' },
+  readLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, color: dark ? '#888' : '#555' },
   readValue: { fontSize: 14, fontWeight: '600', color: dark ? '#fff' : '#111', textAlign: 'right', flex: 1, marginLeft: 16 },
   fieldContainer: { gap: 6 },
-  fieldLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999' },
+  fieldLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#777' : '#666' },
   input: {
     height: 48, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8',
     backgroundColor: dark ? '#111' : '#fafafa', color: dark ? '#fff' : '#111',
@@ -557,8 +555,8 @@ const styles = (dark: boolean) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
   reminderTitle: { fontSize: 13, fontWeight: '800', letterSpacing: 2, color: dark ? '#fff' : '#111' },
-  reminderSubtitle: { fontSize: 11, color: dark ? '#555' : '#aaa', letterSpacing: 0.5, marginTop: 2 },
-  intervalTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999' },
+  reminderSubtitle: { fontSize: 11, color: dark ? '#888' : '#555', letterSpacing: 0.5, marginTop: 2 },
+  intervalTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#777' : '#666' },
   intervalRow: { flexDirection: 'row', gap: 12 },
   intervalField: { flex: 1, gap: 6, alignItems: 'center' },
   intervalInput: {
@@ -568,9 +566,9 @@ const styles = (dark: boolean) => StyleSheet.create({
     color: dark ? '#fff' : '#111',
     fontSize: 22, fontWeight: '700', textAlign: 'center',
   },
-  intervalLabel: { fontSize: 9, fontWeight: '800', letterSpacing: 2, color: dark ? '#555' : '#aaa' },
+  intervalLabel: { fontSize: 9, fontWeight: '800', letterSpacing: 2, color: dark ? '#888' : '#555' },
   nextDueContainer: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 4 },
-  nextDueText: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, color: dark ? '#666' : '#888' },
+  nextDueText: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, color: dark ? '#777' : '#555' },
   nextDueDate: { color: '#e3001b', fontWeight: '800' },
   saveButton: {
     height: 52, backgroundColor: '#e3001b',
@@ -590,7 +588,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   pickerRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   pickerColumn: { flex: 2 },
   pickerColumnSmall: { flex: 1 },
-  pickerLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999', marginBottom: 8 },
+  pickerLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#777' : '#666', marginBottom: 8 },
   pickerScroll: { height: 200, borderWidth: 1, borderColor: dark ? '#2a2a2a' : '#e8e8e8' },
   pickerItem: { paddingVertical: 10, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: dark ? '#2a2a2a' : '#f0f0f0' },
   pickerItemActive: { backgroundColor: '#e3001b' },
@@ -598,7 +596,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   pickerItemTextActive: { color: '#fff', fontWeight: '800' },
   modalButtons: { flexDirection: 'row', gap: 12 },
   modalCancelButton: { flex: 1, height: 48, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8', alignItems: 'center', justifyContent: 'center' },
-  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#555' : '#999' },
+  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#888' : '#666' },
   modalConfirmButton: { flex: 1, height: 48, backgroundColor: '#e3001b', alignItems: 'center', justifyContent: 'center' },
   modalConfirmText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: '#fff' },
 })

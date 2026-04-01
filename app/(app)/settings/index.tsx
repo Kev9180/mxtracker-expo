@@ -80,7 +80,7 @@ function SettingToggle({ label, subtitle, value, onValueChange, dark, last = fal
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: dark ? '#2a2a2a' : '#e0e0e0', true: '#e3001b' }}
+        trackColor={{ false: dark ? '#2a2a2a' : '#c0c0c0', true: '#e3001b' }}
         thumbColor="#fff"
       />
     </View>
@@ -136,7 +136,7 @@ function EditModal({ visible, title, initialValue, onConfirm, onCancel, dark, pl
                   value={text}
                   onChangeText={setText}
                   placeholder={placeholder}
-                  placeholderTextColor={dark ? '#444' : '#bbb'}
+                  placeholderTextColor={dark ? '#444' : '#999'}
                   keyboardType={keyboardType ?? 'default'}
                   autoCapitalize= {secureTextEntry ? 'none' : 'words'}
                   autoFocus
@@ -148,7 +148,7 @@ function EditModal({ visible, title, initialValue, onConfirm, onCancel, dark, pl
                     value={confirmText}
                     onChangeText={setConfirmText}
                     placeholder="Confirm new password"
-                    placeholderTextColor={dark ? '#444' : '#bbb'}
+                    placeholderTextColor={dark ? '#444' : '#999'}
                     autoCapitalize="none"
                     secureTextEntry
                   />
@@ -253,7 +253,7 @@ function TimezoneModal({ visible, current, onSelect, onCancel, dark }: {
                   value={search}
                   onChangeText={setSearch}
                   placeholder="Search timezones..."
-                  placeholderTextColor={dark ? '#444' : '#bbb'}
+                  placeholderTextColor={dark ? '#444' : '#999'}
                   autoCapitalize="none"
                 />
                 <ScrollView
@@ -654,14 +654,14 @@ const styles = (dark: boolean) => StyleSheet.create({
   header: { paddingHorizontal: 24, paddingTop: 64, paddingBottom: 16 },
   backButton: { marginBottom: 12 },
   headerTitle: { fontSize: 28, fontWeight: '900', letterSpacing: 4, color: dark ? '#fff' : '#111' },
-  headerSubtitle: { fontSize: 11, fontWeight: '600', letterSpacing: 2, color: dark ? '#555' : '#999', marginTop: 4 },
+  headerSubtitle: { fontSize: 11, fontWeight: '600', letterSpacing: 2, color: dark ? '#888' : '#666', marginTop: 4 },
   accentBar: { height: 2, backgroundColor: '#e3001b', marginHorizontal: 24, marginBottom: 16 },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 24, paddingBottom: 48 },
 
   sectionHeader: {
     fontSize: 10, fontWeight: '800', letterSpacing: 3,
-    color: dark ? '#555' : '#aaa', marginTop: 24, marginBottom: 8,
+    color: dark ? '#888' : '#555', marginTop: 24, marginBottom: 8,
   },
   section: {
     borderWidth: 1, borderColor: dark ? '#2a2a2a' : '#e8e8e8',
@@ -675,7 +675,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   rowLast: { borderBottomWidth: 0 },
   rowLabel: { fontSize: 14, fontWeight: '600', color: dark ? '#fff' : '#111', letterSpacing: 0.3 },
-  rowSubtitle: { fontSize: 12, color: dark ? '#555' : '#aaa', marginTop: 2, letterSpacing: 0.3 },
+  rowSubtitle: { fontSize: 12, color: dark ? '#888' : '#555', marginTop: 2, letterSpacing: 0.3 },
 
   signOutButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -688,13 +688,13 @@ const styles = (dark: boolean) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     height: 44, marginTop: 12,
   },
-  deleteAccountText: { color: dark ? '#444' : '#bbb', fontSize: 11, fontWeight: '700', letterSpacing: 2 },
+  deleteAccountText: { color: dark ? '#444' : '#777', fontSize: 11, fontWeight: '700', letterSpacing: 2 },
 
   savingIndicator: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, marginTop: 16,
   },
-  savingText: { fontSize: 11, fontWeight: '700', letterSpacing: 2, color: dark ? '#555' : '#aaa' },
+  savingText: { fontSize: 11, fontWeight: '700', letterSpacing: 2, color: dark ? '#888' : '#555' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
   modalContainer: { backgroundColor: dark ? '#1a1a1a' : '#fff', padding: 24, paddingBottom: 40 },
@@ -711,7 +711,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     borderColor: dark ? '#2a2a2a' : '#e8e8e8',
     alignItems: 'center', justifyContent: 'center',
   },
-  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#555' : '#999' },
+  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#888' : '#666' },
   modalConfirmButton: { flex: 1, height: 48, backgroundColor: '#e3001b', alignItems: 'center', justifyContent: 'center' },
   modalConfirmText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: '#fff' },
 
@@ -722,7 +722,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     marginBottom: 8,
   },
   pickerOptionActive: { borderColor: '#e3001b', backgroundColor: dark ? '#1a0a0a' : '#fff5f5' },
-  pickerOptionLabel: { fontSize: 13, fontWeight: '800', letterSpacing: 2, color: dark ? '#888' : '#aaa' },
+  pickerOptionLabel: { fontSize: 13, fontWeight: '800', letterSpacing: 2, color: dark ? '#888' : '#555' },
   pickerOptionLabelActive: { color: '#e3001b' },
-  pickerOptionSubtitle: { fontSize: 11, color: dark ? '#555' : '#bbb', marginTop: 2, letterSpacing: 0.5 },
+  pickerOptionSubtitle: { fontSize: 11, color: dark ? '#888' : '#777', marginTop: 2, letterSpacing: 0.5 },
 })

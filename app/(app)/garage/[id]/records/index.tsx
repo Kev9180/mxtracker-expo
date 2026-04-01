@@ -542,7 +542,7 @@ export default function VehicleRecordsScreen() {
                     </View>
                     <View style={s.cardBottom}>
                       <View style={s.cardMeta}>
-                        <Ionicons name="calendar-outline" size={12} color={dark ? '#555' : '#aaa'} />
+                        <Ionicons name="calendar-outline" size={12} color={dark ? '#888' : '#555'} />
                         <Text style={s.cardMetaText}>
                           {item.completed_date
                             ? formatDate(item.completed_date)
@@ -599,7 +599,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 11, fontWeight: '600', letterSpacing: 3,
-    color: dark ? '#555' : '#999', marginTop: 2,
+    color: dark ? '#888' : '#666', marginTop: 2,
   },
   addButton: {
     width: 44, height: 44, backgroundColor: '#e3001b',
@@ -626,7 +626,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   sectionHeaderText: {
     fontSize: 11, fontWeight: '800', letterSpacing: 3,
-    color: dark ? '#555' : '#999',
+    color: dark ? '#888' : '#666',
   },
   card: {
     backgroundColor: dark ? '#1a1a1a' : '#fff',
@@ -645,7 +645,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   cardMetaText: {
     fontSize: 11, fontWeight: '600', letterSpacing: 0.5,
-    color: dark ? '#555' : '#aaa',
+    color: dark ? '#888' : '#555',
   },
   badge: {
     paddingHorizontal: 8, paddingVertical: 3,
@@ -658,7 +658,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     fontSize: 16, fontWeight: '800', letterSpacing: 4,
     color: dark ? '#2a2a2a' : '#ccc',
   },
-  emptySubtitle: { fontSize: 13, color: dark ? '#333' : '#bbb', letterSpacing: 1 },
+  emptySubtitle: { fontSize: 13, color: dark ? '#555' : '#777', letterSpacing: 1 },
   deleteAction: {
     backgroundColor: '#e3001b',
     justifyContent: 'center',

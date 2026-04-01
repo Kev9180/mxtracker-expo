@@ -55,6 +55,7 @@ function daysUntil(dateStr: string | null | undefined): number | null {
 
 interface ReminderForm {
   task_name: string
+  completed_date: string
   next_due_date: string
   interval_years: string
   interval_months: string
@@ -64,6 +65,7 @@ interface ReminderForm {
 function recordToForm(r: MaintenanceRecord): ReminderForm {
   return {
     task_name: r.task_name,
+    completed_date: r.completed_date ?? '',
     next_due_date: r.next_due_date ?? '',
     interval_years: r.interval_years != null ? String(r.interval_years) : '',
     interval_months: r.interval_months != null ? String(r.interval_months) : '',
@@ -98,9 +100,7 @@ function EditField({ label, value, onChangeText, placeholder, keyboardType, maxL
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={dark ? '#444' : '#bbb'}
-        keyboardType={keyboardType ?? 'default'}
-        maxLength={maxLength}
+        placeholderTextColor={dark ? '#444' : '#999'}
       />
     </View>
   )
@@ -202,7 +202,6 @@ export default function ReminderDetailScreen() {
   )
 
   async function fetchRecord() {
-    setLoading(true)
     const { data, error } = await supabase
       .from('maintenance_records')
       .select('*')
@@ -256,10 +255,26 @@ export default function ReminderDetailScreen() {
     }
 
     setSaving(true)
+
+    // The DB trigger recalculates next_due_date = completed_date + interval whenever
+    // completed_date is set. Back-calculate completed_date from the user's desired
+    // next_due_date so the trigger produces exactly what the user entered.
+    let derivedCompletedDate: string | null = form.completed_date || null
+    if (form.next_due_date) {
+      const dueDate = new Date(form.next_due_date + 'T12:00:00')
+      dueDate.setFullYear(dueDate.getFullYear() - y)
+      dueDate.setMonth(dueDate.getMonth() - m)
+      dueDate.setDate(dueDate.getDate() - d)
+      const mm = String(dueDate.getMonth() + 1).padStart(2, '0')
+      const dd = String(dueDate.getDate()).padStart(2, '0')
+      derivedCompletedDate = `${dueDate.getFullYear()}-${mm}-${dd}`
+    }
+
     const { error } = await supabase
       .from('maintenance_records')
       .update({
         task_name: form.task_name.trim(),
+        completed_date: derivedCompletedDate,
         next_due_date: form.next_due_date || null,
         interval_years: form.interval_years ? parseInt(form.interval_years) : null,
         interval_months: form.interval_months ? parseInt(form.interval_months) : null,
@@ -330,7 +345,6 @@ export default function ReminderDetailScreen() {
             value={formatInterval(record.interval_years, record.interval_months, record.interval_days)}
             dark={dark}
           />
-          <ReadRow label="NEXT DUE" value={nextDue} dark={dark} />
         </View>
       </View>
 
@@ -362,10 +376,10 @@ export default function ReminderDetailScreen() {
             <View style={s.fieldContainer}>
               <Text style={s.fieldLabel}>DUE DATE</Text>
               <TouchableOpacity style={[s.input, s.dateButton]} onPress={() => setShowDatePicker(true)}>
-                <Text style={{ color: form.next_due_date ? (dark ? '#fff' : '#111') : (dark ? '#444' : '#bbb'), fontSize: 15 }}>
+                <Text style={{ color: form.next_due_date ? (dark ? '#fff' : '#111') : (dark ? '#444' : '#999'), fontSize: 15 }}>
                   {form.next_due_date ? formatDate(form.next_due_date) : 'Select due date'}
                 </Text>
-                <Ionicons name="calendar-outline" size={16} color={dark ? '#555' : '#aaa'} />
+                <Ionicons name="calendar-outline" size={16} color={dark ? '#777' : '#555'} />
               </TouchableOpacity>
             </View>
 
@@ -412,7 +426,7 @@ export default function ReminderDetailScreen() {
             {nextDue && (
               <View style={s.nextDueContainer}>
                 <Ionicons name="calendar-outline" size={14} color="#e3001b" />
-                <Text style={s.nextDueText}>Next due: <Text style={s.nextDueDate}>{nextDue}</Text></Text>
+                <Text style={s.nextDueText}>After completion, next due: <Text style={s.nextDueDate}>{nextDue}</Text></Text>
               </View>
             )}
           </View>
@@ -457,7 +471,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     color: dark ? '#fff' : '#111', textAlign: 'center',
   },
   headerAction: { fontSize: 12, fontWeight: '800', letterSpacing: 2, color: '#e3001b', textAlign: 'right' },
-  headerActionCancel: { color: dark ? '#666' : '#999' },
+  headerActionCancel: { color: dark ? '#777' : '#666' },
   accentBar: { height: 2, backgroundColor: '#e3001b', marginHorizontal: 24, marginBottom: 24 },
   accentBarSmall: { height: 2, backgroundColor: '#e3001b', marginBottom: 20 },
   scroll: { flex: 1 },
@@ -476,17 +490,17 @@ const styles = (dark: boolean) => StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
     paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: dark ? '#1f1f1f' : '#f8f8f8',
   },
-  readLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, color: dark ? '#555' : '#aaa' },
+  readLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, color: dark ? '#888' : '#555' },
   readValue: { fontSize: 14, fontWeight: '600', color: dark ? '#fff' : '#111', textAlign: 'right', flex: 1, marginLeft: 16 },
   fieldContainer: { gap: 6 },
-  fieldLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999' },
+  fieldLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#777' : '#666' },
   input: {
     height: 48, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8',
     backgroundColor: dark ? '#111' : '#fafafa', color: dark ? '#fff' : '#111',
     paddingHorizontal: 14, fontSize: 15,
   },
   dateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  intervalTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999' },
+  intervalTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#777' : '#666' },
   intervalRow: { flexDirection: 'row', gap: 12 },
   intervalField: { flex: 1, gap: 6, alignItems: 'center' },
   intervalInput: {
@@ -496,9 +510,9 @@ const styles = (dark: boolean) => StyleSheet.create({
     color: dark ? '#fff' : '#111',
     fontSize: 22, fontWeight: '700', textAlign: 'center',
   },
-  intervalLabel: { fontSize: 9, fontWeight: '800', letterSpacing: 2, color: dark ? '#555' : '#aaa' },
+  intervalLabel: { fontSize: 9, fontWeight: '800', letterSpacing: 2, color: dark ? '#888' : '#555' },
   nextDueContainer: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 4 },
-  nextDueText: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, color: dark ? '#666' : '#888' },
+  nextDueText: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, color: dark ? '#777' : '#555' },
   nextDueDate: { color: '#e3001b', fontWeight: '800' },
   markCompleteButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -520,7 +534,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   pickerRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   pickerColumn: { flex: 2 },
   pickerColumnSmall: { flex: 1 },
-  pickerLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#666' : '#999', marginBottom: 8 },
+  pickerLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: dark ? '#777' : '#666', marginBottom: 8 },
   pickerScroll: { height: 200, borderWidth: 1, borderColor: dark ? '#2a2a2a' : '#e8e8e8' },
   pickerItem: { paddingVertical: 10, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: dark ? '#2a2a2a' : '#f0f0f0' },
   pickerItemActive: { backgroundColor: '#e3001b' },
@@ -528,7 +542,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   pickerItemTextActive: { color: '#fff', fontWeight: '800' },
   modalButtons: { flexDirection: 'row', gap: 12 },
   modalCancelButton: { flex: 1, height: 48, borderWidth: 1.5, borderColor: dark ? '#2a2a2a' : '#e8e8e8', alignItems: 'center', justifyContent: 'center' },
-  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#555' : '#999' },
+  modalCancelText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: dark ? '#888' : '#666' },
   modalConfirmButton: { flex: 1, height: 48, backgroundColor: '#e3001b', alignItems: 'center', justifyContent: 'center' },
   modalConfirmText: { fontSize: 12, fontWeight: '800', letterSpacing: 3, color: '#fff' },
 })

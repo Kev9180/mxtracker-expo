@@ -144,7 +144,7 @@ const styles = (dark: boolean) => StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 1,
-    color: dark ? '#555' : '#999',
+    color: dark ? '#888' : '#666',
     marginTop: 2,
     textAlign: 'center',
   },
@@ -187,7 +187,7 @@ const styles = (dark: boolean) => StyleSheet.create({
   },
   navCardSubtitle: {
     fontSize: 12,
-    color: dark ? '#555' : '#999',
+    color: dark ? '#888' : '#666',
     letterSpacing: 0.5,
   },
 })
