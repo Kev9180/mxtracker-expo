@@ -66,9 +66,15 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   if (finalStatus !== 'granted') return null
 
   try {
-    const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: '91f9bfd6-1623-4764-92b5-0535787c1538',
-    })
+    const TIMEOUT_MS = 10_000
+    const tokenData = await Promise.race([
+      Notifications.getExpoPushTokenAsync({
+        projectId: '91f9bfd6-1623-4764-92b5-0535787c1538',
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Push token request timed out')), TIMEOUT_MS)
+      ),
+    ])
     return tokenData.data
   } catch (error) {
     console.warn('Failed to get push token:', error)

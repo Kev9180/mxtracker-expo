@@ -69,14 +69,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
 
     if (resolvedProfile) {
-      // Register for push notifications and persist the token if it changed
-      const token = await registerForPushNotificationsAsync()
-      if (token && token !== resolvedProfile.push_token) {
-        await supabase
-          .from('profiles')
-          .update({ push_token: token })
-          .eq('id', user.id)
-        resolvedProfile = { ...resolvedProfile, push_token: token }
+      // Register for push notifications and persist the token if it changed.
+      // Wrapped in try/catch so a timeout or permission error never blocks
+      // the profile from being set (prevents ANR on no-network start).
+      try {
+        const token = await registerForPushNotificationsAsync()
+        if (token && token !== resolvedProfile.push_token) {
+          await supabase
+            .from('profiles')
+            .update({ push_token: token })
+            .eq('id', user.id)
+          resolvedProfile = { ...resolvedProfile, push_token: token }
+        }
+      } catch (error) {
+        console.warn('Push notification registration failed:', error)
       }
       setProfile(resolvedProfile)
     }

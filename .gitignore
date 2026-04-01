@@ -49,3 +49,5 @@ yarn-error.*
 design_spec.docx
 
 .env.local
+
+progress.md

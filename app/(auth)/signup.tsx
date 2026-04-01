@@ -10,7 +10,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useTheme } from '../../lib/ThemeContext'
@@ -25,6 +25,10 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+
+  const emailRef = useRef<TextInput>(null)
+  const passwordRef = useRef<TextInput>(null)
+  const confirmPasswordRef = useRef<TextInput>(null)
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -119,10 +123,13 @@ export default function Signup() {
             onChangeText={setDisplayName}
             autoCapitalize="words"
             autoComplete="name"
+            returnKeyType="next"
+            onSubmitEditing={() => emailRef.current?.focus()}
           />
 
           <Text style={s.label}>EMAIL</Text>
           <TextInput
+            ref={emailRef}
             style={s.input}
             placeholder="your@email.com"
             placeholderTextColor={dark ? '#555' : '#aaa'}
@@ -131,10 +138,13 @@ export default function Signup() {
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
           />
 
           <Text style={s.label}>PASSWORD</Text>
           <TextInput
+            ref={passwordRef}
             style={s.input}
             placeholder="Min. 8 characters"
             placeholderTextColor={dark ? '#555' : '#aaa'}
@@ -144,10 +154,13 @@ export default function Signup() {
             autoComplete="new-password"
             textContentType="newPassword"
             passwordRules="minlength: 8;"
+            returnKeyType="next"
+            onSubmitEditing={() => confirmPasswordRef.current?.focus()}
           />
 
           <Text style={s.label}>CONFIRM PASSWORD</Text>
           <TextInput
+            ref={confirmPasswordRef}
             style={s.input}
             placeholder="••••••••"
             placeholderTextColor={dark ? '#555' : '#aaa'}
@@ -156,6 +169,8 @@ export default function Signup() {
             secureTextEntry
             autoComplete="new-password"
             textContentType="newPassword"
+            returnKeyType="go"
+            onSubmitEditing={handleSignup}
           />
 
           <TouchableOpacity
