@@ -130,33 +130,36 @@ export default function VehicleRecordsScreen() {
   const totalRecords = sections.reduce((sum, s) => sum + s.data.length, 0)
 
   async function deleteRecord(id: string) {
-    Alert.alert(
-      'Delete Record',
-      'This will permanently delete this maintenance record. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const { error } = await supabase
-              .from('maintenance_records')
-              .delete()
-              .eq('id', id)
-            if (error) {
-              Alert.alert('Error', error.message)
-            } else {
-              setSections(prev =>
-                prev.map(section => ({
-                  ...section,
-                  data: section.data.filter(r => r.id !== id)
-                })).filter(section => section.data.length > 0)
-              )
-            }
-          }
-        }
-      ]
-    )
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm('This will permanently delete this maintenance record. This cannot be undone.')
+      : await new Promise<boolean>(resolve =>
+          Alert.alert(
+            'Delete Record',
+            'This will permanently delete this maintenance record. This cannot be undone.',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+            ]
+          )
+        )
+
+    if (!confirmed) return
+
+    const { error } = await supabase
+      .from('maintenance_records')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      Alert.alert('Error', error.message)
+    } else {
+      setSections(prev =>
+        prev.map(section => ({
+          ...section,
+          data: section.data.filter(r => r.id !== id)
+        })).filter(section => section.data.length > 0)
+      )
+    }
   }
 
   async function exportRecords() {

@@ -123,6 +123,8 @@ export default function Signup() {
             onChangeText={setDisplayName}
             autoCapitalize="words"
             autoComplete="name"
+            autoCorrect={false}
+            spellCheck={false}
             returnKeyType="next"
             onSubmitEditing={() => emailRef.current?.focus()}
           />
@@ -138,6 +140,8 @@ export default function Signup() {
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
+            autoCorrect={false}
+            spellCheck={false}
             returnKeyType="next"
             onSubmitEditing={() => passwordRef.current?.focus()}
           />
@@ -154,6 +158,8 @@ export default function Signup() {
             autoComplete="new-password"
             textContentType="newPassword"
             passwordRules="minlength: 8;"
+            autoCorrect={false}
+            spellCheck={false}
             returnKeyType="next"
             onSubmitEditing={() => confirmPasswordRef.current?.focus()}
           />
@@ -169,6 +175,8 @@ export default function Signup() {
             secureTextEntry
             autoComplete="new-password"
             textContentType="newPassword"
+            autoCorrect={false}
+            spellCheck={false}
             returnKeyType="go"
             onSubmitEditing={handleSignup}
           />

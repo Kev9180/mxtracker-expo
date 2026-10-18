@@ -45,6 +45,8 @@ function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapi
         placeholderTextColor={dark ? '#444' : '#999'}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
+        autoCorrect={false}
+        spellCheck={false}
         maxLength={maxLength}
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}

@@ -98,6 +98,8 @@ function EditField({ label, value, onChangeText, placeholder, keyboardType, auto
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={dark ? '#444' : '#999'}
+        autoCorrect={false}
+        spellCheck={false}
         maxLength={maxLength}
         multiline={multiline}
         numberOfLines={multiline ? 4 : 1}
@@ -295,28 +297,31 @@ export default function RecordDetail() {
   }
 
   async function handleDelete() {
-    Alert.alert(
-      'Delete Record',
-      'This will permanently delete this maintenance record. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const { error } = await supabase
-              .from('maintenance_records')
-              .delete()
-              .eq('id', record!.id)
-            if (error) {
-              Alert.alert('Error', error.message)
-            } else {
-              router.back()
-            }
-          }
-        }
-      ]
-    )
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm('This will permanently delete this maintenance record. This cannot be undone.')
+      : await new Promise<boolean>(resolve =>
+          Alert.alert(
+            'Delete Record',
+            'This will permanently delete this maintenance record. This cannot be undone.',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+            ]
+          )
+        )
+
+    if (!confirmed) return
+
+    const { error } = await supabase
+      .from('maintenance_records')
+      .delete()
+      .eq('id', record!.id)
+
+    if (error) {
+      Alert.alert('Error', error.message)
+    } else {
+      router.back()
+    }
   }
 
   if (loading || !record || !form) {

@@ -79,6 +79,8 @@ export default function Login() {
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
+            autoCorrect={false}
+            spellCheck={false}
             returnKeyType="next"
             onSubmitEditing={() => {}}
           />
@@ -92,6 +94,8 @@ export default function Login() {
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="password"
+            autoCorrect={false}
+            spellCheck={false}
             returnKeyType="go"
             onSubmitEditing={handleLogin}
           />

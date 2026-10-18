@@ -101,6 +101,8 @@ function EditField({ label, value, onChangeText, placeholder, keyboardType, maxL
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={dark ? '#444' : '#999'}
+        autoCorrect={false}
+        spellCheck={false}
       />
     </View>
   )

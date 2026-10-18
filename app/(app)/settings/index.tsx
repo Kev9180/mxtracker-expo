@@ -138,7 +138,9 @@ function EditModal({ visible, title, initialValue, onConfirm, onCancel, dark, pl
                   placeholder={placeholder}
                   placeholderTextColor={dark ? '#444' : '#999'}
                   keyboardType={keyboardType ?? 'default'}
-                  autoCapitalize= {secureTextEntry ? 'none' : 'words'}
+                  autoCapitalize={secureTextEntry ? 'none' : 'words'}
+                  autoCorrect={false}
+                  spellCheck={false}
                   autoFocus
                   secureTextEntry={secureTextEntry}
                 />
@@ -150,6 +152,8 @@ function EditModal({ visible, title, initialValue, onConfirm, onCancel, dark, pl
                     placeholder="Confirm new password"
                     placeholderTextColor={dark ? '#444' : '#999'}
                     autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     secureTextEntry
                   />
                 )}
@@ -318,6 +322,7 @@ export default function SettingsScreen() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const { preference: themePreference, setPreference } = useTheme()
+  const reviewUrl = 'https://apps.apple.com/us/app/mxtracker-maintenance-log/id6761039686'
 
   const [editModal, setEditModal] = useState<{
     visible: boolean; field: string; title: string
@@ -604,7 +609,7 @@ export default function SettingsScreen() {
           <SettingRow
             label="Rate MXTracker"
             subtitle="Love the app? Leave us a review"
-            onPress={() => Alert.alert('Coming Soon', 'Rating will be available once the app is live on the App Store.')}
+            onPress={() => Linking.openURL(reviewUrl)}
             dark={dark}
           />
           <SettingRow

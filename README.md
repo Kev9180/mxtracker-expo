@@ -38,7 +38,11 @@ Build and deploy the web app to Cloudflare Pages:
 npx expo export --platform web
 ```
 
-Then drag and drop the `dist/` folder into the Cloudflare Pages project at [dash.cloudflare.com](https://dash.cloudflare.com) → Workers & Pages → `mxtracker`.
+Then drag and drop the `dist/` folder into the Cloudflare Pages project at:
+- [dash.cloudflare.com](https://dash.cloudflare.com)
+- Workers & Pages
+- 'Create Deployment'
+- 'Preview' or 'Production'
 
 The web app is served at `mxtracker.app`. The `public/` folder contains static files (e.g. `privacy.html`) that are copied into `dist/` automatically during export.
 

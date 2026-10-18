@@ -9,3 +9,9 @@
 - Update build number to 1.0.3
 - Merged feature branch into main
 - Created new production builds for iOS and Android
+- Exported new web build and updated dist folder on Cloudfare worker
+
+## 18 October 2026
+- Updated cron job on Supabase
+- Updated edge function
+- Created new web deployment and deployed on Cloudfare

@@ -104,6 +104,8 @@ function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapi
         placeholderTextColor={dark ? '#444' : '#999'}
         keyboardType={keyboardType ?? 'default'}
         autoCapitalize={autoCapitalize ?? 'words'}
+        autoCorrect={false}
+        spellCheck={false}
         maxLength={maxLength}
       />
     </View>
