@@ -326,6 +326,7 @@ export default function VehicleRecordsScreen() {
   .field-label { font-size: 8px; font-weight: 800; letter-spacing: 1.5px; color: #555; margin-bottom: 1px; }
   .field-value { font-size: 12px; color: #111; font-weight: 500; }
   .notes-row { margin-bottom: 8px; }
+  .notes-row .field-label, .notes-row .field-value { display: block; }
   .timestamps { font-size: 9px; color: #666; margin-top: 8px; display: flex; gap: 16px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
   .note { display: block; font-size: 9px; color: #555; margin-top: 6px; font-style: italic; }
   .mod-history { margin-top: 8px; padding: 8px 10px; background: #fff8f0; border-left: 3px solid #f0a500; font-size: 9px; }

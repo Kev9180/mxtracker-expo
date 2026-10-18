@@ -27,6 +27,7 @@ function page(bodyHtml) {
     .hash-section { background: #f5f5f0; border: 1px solid #e8e8e8; border-left: 4px solid #e3001b; padding: 16px 18px; margin-bottom: 24px; }
     .hash-label { font-size: 9px; font-weight: 900; letter-spacing: 2px; color: #999; text-transform: uppercase; margin-bottom: 8px; }
     .hash-value { font-family: monospace; font-size: 11px; color: #111; word-break: break-all; line-height: 1.7; }
+    .hash-explainer { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 20px; }
     .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
     .meta-item label { font-size: 9px; font-weight: 900; letter-spacing: 2px; color: #999; text-transform: uppercase; display: block; margin-bottom: 4px; }
     .meta-item span { font-size: 14px; font-weight: 600; color: #111; }
@@ -122,7 +123,7 @@ export default {
         });
         body = `
           <span class="status-icon">✅</span>
-          <h1>Export Verified</h1>
+          <h1>Export Record Found</h1>
           ${vehicleLabel ? `<p class="vehicle-name">${vehicleLabel}</p>` : ''}
           <div class="meta-grid">
             <div class="meta-item"><label>Export Date</label><span>${exportDate}</span></div>
@@ -132,6 +133,7 @@ export default {
             <div class="hash-label">SHA-256 Integrity Hash</div>
             <div class="hash-value">${exportRow.export_hash}</div>
           </div>
+          <p class="hash-explainer">A hash is a digital fingerprint calculated from selected maintenance-record fields when this report is exported. Comparing the PDF's hash with MXTracker's saved value confirms they contain the same fingerprint. It does not verify the service itself or prove that every visible detail in the PDF is unchanged.</p>
           <div class="compare-section">
             <div class="compare-label">Enter hash from PDF to verify</div>
             <input type="text" id="hashInput" class="hash-input" placeholder="Paste SHA-256 hash from PDF footer…" spellcheck="false" autocomplete="off" />
@@ -147,10 +149,10 @@ export default {
               result.style.display = 'block';
               if (input === stored) {
                 result.className = 'compare-result match';
-                result.innerHTML = '<strong>\u2705 Hashes match.</strong> This document is identical to what was exported from MXTracker.';
+                result.innerHTML = '<strong>\u2705 Hashes match.</strong> This fingerprint matches the value saved for this export. This comparison checks the hash value, not the full PDF contents.';
               } else {
                 result.className = 'compare-result mismatch';
-                result.innerHTML = '<strong>\u274c Hashes do not match.</strong> This document may have been altered after export.';
+                result.innerHTML = '<strong>\u274c Hashes do not match.</strong> Check that you copied the hash from the correct PDF. This comparison cannot identify what caused the mismatch.';
               }
             }
             document.addEventListener('DOMContentLoaded', function() {
