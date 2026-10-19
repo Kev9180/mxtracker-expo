@@ -28,6 +28,12 @@ function page(bodyHtml) {
     .hash-label { font-size: 9px; font-weight: 900; letter-spacing: 2px; color: #999; text-transform: uppercase; margin-bottom: 8px; }
     .hash-value { font-family: monospace; font-size: 11px; color: #111; word-break: break-all; line-height: 1.7; }
     .hash-explainer { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 20px; }
+    .table-wrap { overflow-x: auto; margin: 20px 0; }
+    .records-table { width: 100%; min-width: 760px; table-layout: fixed; border-collapse: collapse; font-size: 12px; text-align: left; }
+    .records-table th:nth-child(1), .records-table td:nth-child(1), .records-table th:nth-child(5), .records-table td:nth-child(5) { white-space: nowrap; }
+    .records-table th { background: #0f0f0f; color: #fff; padding: 9px 8px; font-size: 10px; }
+    .records-table td { padding: 9px 8px; border-bottom: 1px solid #e8e8e8; vertical-align: top; overflow-wrap: anywhere; }
+    .records-table tr:nth-child(even) td { background: #f9f9f9; }
     .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
     .meta-item label { font-size: 9px; font-weight: 900; letter-spacing: 2px; color: #999; text-transform: uppercase; display: block; margin-bottom: 4px; }
     .meta-item span { font-size: 14px; font-weight: 600; color: #111; }
@@ -60,6 +66,16 @@ function page(bodyHtml) {
 </html>`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[character]);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -70,40 +86,30 @@ export default {
     if (verifyMatch) {
       const exportId = verifyMatch[1];
 
-      // Fetch the export record from Supabase
-      let exportRow = null;
+      let verification = null;
       let fetchError = false;
       try {
         const res = await fetch(
-          `${env.SUPABASE_URL}/rest/v1/record_exports?id=eq.${exportId}&select=exported_at,record_count,export_hash,vehicle_id`,
-          { headers: { 'apikey': env.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${env.SUPABASE_ANON_KEY}` } }
+          `${env.SUPABASE_URL}/functions/v1/verify-record-export`,
+          {
+            method: 'POST',
+            headers: {
+              'apikey': env.SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${env.SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ export_id: exportId }),
+          }
         );
-        const rows = await res.json();
-        exportRow = rows?.[0] ?? null;
+        if (res.status === 404) {
+          verification = { status: 'not_found' };
+        } else if (!res.ok && res.status !== 409) {
+          fetchError = true;
+        } else {
+          verification = await res.json();
+        }
       } catch (e) {
         fetchError = true;
-      }
-
-      // Fetch vehicle summary if we have a vehicle_id
-      let vehicleLabel = '';
-      if (exportRow?.vehicle_id) {
-        try {
-          const vRes = await fetch(
-            `${env.SUPABASE_URL}/rest/v1/rpc/get_vehicle_summary`,
-            {
-              method: 'POST',
-              headers: {
-                'apikey': env.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${env.SUPABASE_ANON_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ p_vehicle_id: exportRow.vehicle_id }),
-            }
-          );
-          const vRows = await vRes.json();
-          const v = vRows?.[0];
-          if (v) vehicleLabel = [v.year, v.make, v.model, v.trim].filter(Boolean).join(' ');
-        } catch (_) {}
       }
 
       let body;
@@ -112,55 +118,60 @@ export default {
           <span class="status-icon">⚠️</span>
           <h1>Verification Unavailable</h1>
           <p class="message" style="margin-top:12px;">Could not reach the MXTracker database. Please try again shortly.</p>`;
-      } else if (!exportRow) {
+      } else if (verification?.status === 'not_found') {
         body = `
           <span class="status-icon">❌</span>
           <h1>Export Not Found</h1>
           <p class="message" style="margin-top:12px;">No export record exists for this ID. The link may be invalid or the report may not have been generated with MXTracker.</p>`;
+      } else if (verification?.status === 'legacy') {
+        body = `
+          <span class="status-icon">ℹ️</span>
+          <h1>Older Export</h1>
+          <p class="message" style="margin-top:12px;">This report was exported before MXTracker began saving the original maintenance records. We cannot verify that its records match the version originally exported.</p>`;
+      } else if (verification?.status === 'integrity_error') {
+        body = `
+          <span class="status-icon">⚠️</span>
+          <h1>Verification Problem</h1>
+          <p class="message" style="margin-top:12px;">MXTracker could not validate the saved export record. Do not rely on this report as verified; please contact MXTracker support.</p>`;
       } else {
-        const exportDate = new Date(exportRow.exported_at).toLocaleDateString('en-US', {
+        const snapshot = verification.record_snapshot;
+        const vehicle = snapshot.vehicle ?? {};
+        const vehicleLabel = [vehicle.year, vehicle.make, vehicle.model, vehicle.trim]
+          .filter(Boolean).map(escapeHtml).join(' ');
+        const mileageUnit = vehicle.odometer_unit === 'kilometers' ? 'km' : 'mi';
+        const exportDate = new Date(verification.exported_at).toLocaleDateString('en-US', {
           year: 'numeric', month: 'long', day: 'numeric',
         });
+        const recordRows = (snapshot.records ?? []).map(record => `
+          <tr>
+            <td>${escapeHtml(record.completed_date || '—')}</td>
+            <td>${escapeHtml(record.task_name)}</td>
+            <td>${escapeHtml(record.mileage_at_service == null ? '—' : `${record.mileage_at_service.toLocaleString()} ${mileageUnit}`)}</td>
+            <td>${escapeHtml(record.performed_by || '—')}</td>
+            <td>${escapeHtml(record.cost == null ? '—' : `$${Number(record.cost).toFixed(2)}`)}</td>
+            <td>${escapeHtml(record.notes || '—')}</td>
+          </tr>`).join('');
+        const editedRecordCount = new Set((snapshot.changes ?? []).map(change => change.maintenance_record_id)).size;
         body = `
-          <span class="status-icon">✅</span>
-          <h1>Export Record Found</h1>
+          <span class="status-icon">📋</span>
+          <h1>MXTracker's Saved Records</h1>
           ${vehicleLabel ? `<p class="vehicle-name">${vehicleLabel}</p>` : ''}
           <div class="meta-grid">
             <div class="meta-item"><label>Export Date</label><span>${exportDate}</span></div>
-            <div class="meta-item"><label>Records</label><span>${exportRow.record_count}</span></div>
+            <div class="meta-item"><label>Records</label><span>${verification.record_count}</span></div>
           </div>
-          <div class="hash-section">
-            <div class="hash-label">SHA-256 Integrity Hash</div>
-            <div class="hash-value">${exportRow.export_hash}</div>
-          </div>
-          <p class="hash-explainer">A hash is a digital fingerprint calculated from selected maintenance-record fields when this report is exported. Comparing the PDF's hash with MXTracker's saved value confirms they contain the same fingerprint. It does not verify the service itself or prove that every visible detail in the PDF is unchanged.</p>
-          <div class="compare-section">
-            <div class="compare-label">Enter hash from PDF to verify</div>
-            <input type="text" id="hashInput" class="hash-input" placeholder="Paste SHA-256 hash from PDF footer…" spellcheck="false" autocomplete="off" />
-            <button class="compare-btn" onclick="compareHash()">Compare</button>
-            <div id="compareResult" class="compare-result" style="display:none;"></div>
-          </div>
-          <script>
-            var stored = '${exportRow.export_hash}';
-            function compareHash() {
-              var input = document.getElementById('hashInput').value.trim().toLowerCase();
-              var result = document.getElementById('compareResult');
-              if (!input) return;
-              result.style.display = 'block';
-              if (input === stored) {
-                result.className = 'compare-result match';
-                result.innerHTML = '<strong>\u2705 Hashes match.</strong> This fingerprint matches the value saved for this export. This comparison checks the hash value, not the full PDF contents.';
-              } else {
-                result.className = 'compare-result mismatch';
-                result.innerHTML = '<strong>\u274c Hashes do not match.</strong> Check that you copied the hash from the correct PDF. This comparison cannot identify what caused the mismatch.';
-              }
-            }
-            document.addEventListener('DOMContentLoaded', function() {
-              document.getElementById('hashInput').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') compareHash();
-              });
-            });
-          </script>`;  
+            <p class="message">These are the maintenance records MXTracker saved when this report was exported. Compare them with the seller's PDF. If any details differ, the PDF is not an unchanged copy of the saved report.</p>
+            <p class="instructions"><strong>Saved record check passed.</strong> MXTracker confirmed these saved records match their integrity fingerprint. This page does not inspect the PDF automatically, so compare its records with the seller's copy.</p>
+            <div class="table-wrap"><table class="records-table">
+              <colgroup>
+                <col style="width:15%" /><col style="width:19%" /><col style="width:14%" />
+                <col style="width:17%" /><col style="width:14%" /><col style="width:21%" />
+              </colgroup>
+              <thead><tr><th>Date</th><th>Service</th><th>Mileage (${mileageUnit})</th><th>Performed by</th><th>Cost</th><th>Notes</th></tr></thead>
+              <tbody>${recordRows || '<tr><td colspan="6">No records were included in this export.</td></tr>'}</tbody>
+            </table></div>
+            ${editedRecordCount ? `<p class="instructions">${editedRecordCount} record${editedRecordCount === 1 ? ' had an edit' : 's had edits'} saved before this export. See the Modification History in the PDF for details.</p>` : '<p class="instructions">No record edits were logged before this export.</p>'}
+            <p class="instructions"><strong>What this confirms:</strong> this page shows the records saved for this export. It cannot confirm that the listed service was actually performed or that the owner's original entries were truthful.</p>`;
       }
 
       return new Response(page(body), { headers: { 'content-type': 'text/html;charset=UTF-8' } });

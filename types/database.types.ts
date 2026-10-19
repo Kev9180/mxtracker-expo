@@ -87,6 +87,7 @@ export type Database = {
           user_id: string
           record_count: number
           export_hash: string
+          record_snapshot: Json | null
           exported_at: string
         }
         Insert: {
@@ -95,6 +96,7 @@ export type Database = {
           user_id: string
           record_count: number
           export_hash: string
+          record_snapshot?: Json | null
           exported_at?: string
         }
         Update: {
@@ -103,6 +105,7 @@ export type Database = {
           user_id?: string
           record_count?: number
           export_hash?: string
+          record_snapshot?: Json | null
           exported_at?: string
         }
         Relationships: [

@@ -408,3 +408,15 @@ entrypoint = "./functions/handle-reminder-action/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/handle-reminder-action/*.html" ]
+
+[functions.create-record-export]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-record-export/deno.json"
+entrypoint = "./functions/create-record-export/index.ts"
+
+[functions.verify-record-export]
+enabled = true
+verify_jwt = false
+import_map = "./functions/verify-record-export/deno.json"
+entrypoint = "./functions/verify-record-export/index.ts"

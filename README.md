@@ -46,17 +46,33 @@ Then drag and drop the `dist/` folder into the Cloudflare Pages project at:
 
 The web app is served at `mxtracker.app`. The `public/` folder contains static files (e.g. `privacy.html`) that are copied into `dist/` automatically during export.
 
+### Cloudflare Verification Worker
+
+The `confirm.mxtracker.app` routes for reminder actions and export verification are served by `web/worker.js`. Deploy this file from the Cloudflare Dashboard under Workers & Pages → `confirm-mxtracker` → Edit Code. Configure these Worker variables:
+
+- `SUPABASE_URL` — project URL
+- `SUPABASE_ANON_KEY` — Supabase publishable/anon key
+
+The export verification route calls the public `verify-record-export` Edge Function. Deploy the function before or alongside the Worker update.
+
 ### iOS
 
-Build and submit a production iOS build:
+An iOS app binary is required to test and release changes to the app code. Uploading a build to TestFlight does **not** release it publicly on the App Store.
+
+For a direct internal install, the `preview` profile creates an internal-distribution build. Register the iPhone with EAS if prompted, then install the build using the link EAS provides:
 
 ```bash
-# Build
-eas build --profile production --platform ios
-
-# Submit (after build completes)
-eas submit --platform ios
+eas build --profile preview --platform ios
 ```
+
+To test through TestFlight, build with the production profile and submit it to App Store Connect. This uploads a build for testing; it does not automatically release it to the public App Store:
+
+```bash
+eas build --profile production --platform ios
+eas submit --profile production --platform ios
+```
+
+After Apple finishes processing the build, add it to an internal TestFlight testing group and install TestFlight on the iPhone. Test the export there. Only submit the tested build for App Store review when you are ready. If you change the code after testing, create and test another build.
 
 ### Android
 
@@ -76,23 +92,31 @@ eas submit --platform android
 eas build --profile production --platform all
 ```
 
-### Preview Builds (Testing Before Production)
+### Preview Builds
 
-The free EAS tier has 30 builds/month combined across platforms. Use a `preview` build to test native behavior (e.g. on TestFlight or a simulator) without consuming production build quota or auto-incrementing the build number:
+The free EAS tier has 30 builds/month combined across platforms. The `preview` profile uses internal distribution and does not auto-increment the production build number. On iOS it is an internal install, not a TestFlight upload; registered devices may be required. Use the production-profile/TestFlight flow above when you specifically need to test through TestFlight.
 
 ```bash
-# iOS preview — produces a .ipa installable via TestFlight
+# iOS preview — internal install; register the device if EAS requests it
 eas build --platform ios --profile preview
 
-# Android preview — produces an .apk installable directly
+# Android preview — internal install
 eas build --platform android --profile preview
 ```
 
-Preview builds use the same native code as production, so platform-specific bugs reproduce identically. Use these to validate fixes before doing a final production build.
+Preview builds are useful for validating native behavior before a production/TestFlight build.
 
 ### Supabase Edge Functions
 
+For verified maintenance-record exports, the `record_exports.record_snapshot` column and access-policy migration must be applied before creating any snapshots. Deploy the verifier and update the Cloudflare Worker before removing public table access. The schema, access policy, and verifier are already deployed for this project. Deploy the latest `web/worker.js` if it has changed, then deploy the authenticated snapshot creator before testing the updated app export flow.
+
 ```bash
+# Creates an export-time record snapshot and its SHA-256 fingerprint (JWT required)
+npx supabase functions deploy create-record-export
+
+# Public verification by export ID; does not require a user JWT
+npx supabase functions deploy verify-record-export --no-verify-jwt
+
 # Account deletion (requires service role — JWT is verified manually inside the function)
 npx supabase functions deploy delete-account --no-verify-jwt
 
@@ -114,6 +138,10 @@ Two Supabase Edge Functions handle the reminder system:
 **`handle-reminder-action`** — Handles button clicks from reminder emails. Supports snooze for 1 week, snooze for 1 month, and stop reminders for a specific task. Protected with HMAC token verification.
 
 **`delete-account`** — Permanently deletes the authenticated user's account and all associated data. Called from the Settings screen. Uses service role key to call `auth.admin.deleteUser`.
+
+**`create-record-export`** — Authenticates the user, verifies access to the vehicle, captures the maintenance records and their update history, computes a SHA-256 fingerprint of the snapshot, and stores both in `record_exports`. The app renders the PDF from this server-created snapshot.
+
+**`verify-record-export`** — Publicly retrieves one export snapshot by export ID and checks that the saved snapshot still matches its stored fingerprint. The Cloudflare verification page displays those official records for manual comparison with the seller's PDF. This verifies the saved snapshot, not the PDF automatically, and does not prove that owner-entered maintenance actually occurred.
 
 ---
 

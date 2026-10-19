@@ -16,7 +16,6 @@ import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Print from 'expo-print'
 import * as Sharing from 'expo-sharing'
-import * as Crypto from 'expo-crypto'
 import * as FileSystem from 'expo-file-system'
 import { supabase } from '../../../../lib/supabase'
 import { Database } from '../../../../types/database.types'
@@ -25,6 +24,9 @@ import { useProfile } from '../../../../lib/ProfileContext'
 
 type MaintenanceRecord = Database['public']['Tables']['maintenance_records']['Row']
 type Vehicle = Database['public']['Tables']['vehicles']['Row']
+type ExportRecord = Pick<MaintenanceRecord,
+  'id' | 'task_name' | 'completed_date' | 'mileage_at_service' | 'performed_by' | 'cost' | 'notes' | 'created_at' | 'updated_at'
+>
 
 interface Section {
   title: string
@@ -176,59 +178,36 @@ export default function VehicleRecordsScreen() {
     async function doExport() {
       setExporting(true)
       try {
-              // Fetch audit logs for all records in one query
-              const recordIds = allRecords.map(r => r.id)
-              const { data: auditLogs } = await supabase
-                .from('maintenance_record_audit')
-                .select('*')
-                .in('maintenance_record_id', recordIds)
-                .order('changed_at', { ascending: true })
+              const { data: exportData, error: exportError } = await supabase.functions.invoke('create-record-export', {
+                body: { vehicle_id: v.id },
+              })
+              if (exportError) throw exportError
 
-              const auditMap: Record<string, typeof auditLogs> = {}
-              for (const log of auditLogs ?? []) {
-                if (!auditMap[log.maintenance_record_id]) auditMap[log.maintenance_record_id] = []
-                auditMap[log.maintenance_record_id]!.push(log)
+              const snapshot = exportData?.record_snapshot
+              if (!exportData?.export_id || !snapshot || !Array.isArray(snapshot.records)) {
+                throw new Error('The server did not return a valid export snapshot.')
               }
 
-              // Sort records by completed_date ascending for the report
-              const sorted = [...allRecords].sort((a, b) => {
-                if (!a.completed_date) return 1
-                if (!b.completed_date) return -1
-                return new Date(a.completed_date).getTime() - new Date(b.completed_date).getTime()
-              })
-
-              // Generate SHA-256 hash of the record snapshot for verification
-              const snapshot = JSON.stringify(sorted.map(r => ({
-                id: r.id, task_name: r.task_name, completed_date: r.completed_date,
-                mileage_at_service: r.mileage_at_service, cost: r.cost,
-                created_at: r.created_at, updated_at: r.updated_at,
-              })))
-              const exportHash = await Crypto.digestStringAsync(
-                Crypto.CryptoDigestAlgorithm.SHA256,
-                snapshot
-              )
-
-              // Log the export to DB
-              const { data: exportRow } = await supabase
-                .from('record_exports')
-                .insert({
-                  vehicle_id: v.id,
-                  user_id: (await supabase.auth.getUser()).data.user!.id,
-                  record_count: allRecords.length,
-                  export_hash: exportHash,
-                })
-                .select()
-                .single()
-
-              const exportId = exportRow?.id ?? 'unknown'
-              const exportedAt = new Date().toLocaleString('en-US', {
+              const sorted = snapshot.records as ExportRecord[]
+              const exportId = exportData.export_id
+              const exportedAt = new Date(exportData.exported_at).toLocaleString('en-US', {
                 year: 'numeric', month: 'long', day: 'numeric',
                 hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
               })
-              const odometerUnit = profile?.odometer_unit === 'kilometers' ? 'km' : 'mi'
+              const odometerUnit = snapshot.vehicle?.odometer_unit === 'kilometers' ? 'km' : 'mi'
               const exportedBy = profile?.display_name || 'Unknown'
               const vehicleName = `${v.year} ${v.make} ${v.model}${v.trim ? ' ' + v.trim : ''}`
               const vehicleNickname = v.nickname ? ` "${v.nickname}"` : ''
+
+              const auditMap: Record<string, Array<{
+                change_type: string
+                changed_at: string
+                changed_fields: string[] | null
+              }>> = {}
+              for (const change of snapshot.changes ?? []) {
+                if (!auditMap[change.maintenance_record_id]) auditMap[change.maintenance_record_id] = []
+                auditMap[change.maintenance_record_id].push(change)
+              }
 
               // Build mileage progression analysis
               const mileageRecords = sorted.filter(r => r.mileage_at_service != null && r.completed_date != null)
@@ -296,15 +275,17 @@ export default function VehicleRecordsScreen() {
                   </div>`
               }
 
+              const pageMarginsCss = Platform.OS === 'web' ? '@page { margin: 0.56in 0.44in; }' : ''
               const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8" />
 <title>MXTracker - ${vehicleName} Maintenance Report</title>
 <style>
+  ${pageMarginsCss}
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; font-size: 12px; line-height: 1.5; }
-  .page { max-width: 720px; margin: 0 auto; padding: 40px 32px; }
+  .page { max-width: 720px; margin: 0 auto; padding: 0; }
   .header-bar { background: #0f0f0f; padding: 20px 24px; margin-bottom: 0; display: flex; align-items: center; gap: 6px; }
   .logo-mx { font-size: 22px; font-weight: 900; color: #e3001b; letter-spacing: 2px; }
   .logo-tracker { font-size: 12px; font-weight: 900; color: #fff; letter-spacing: 4px; }
@@ -358,7 +339,7 @@ export default function VehicleRecordsScreen() {
   <div class="meta-grid">
     <div class="meta-field"><label>EXPORTED BY</label><span>${exportedBy}</span></div>
     <div class="meta-field"><label>EXPORT DATE</label><span>${exportedAt}</span></div>
-    <div class="meta-field"><label>TOTAL RECORDS</label><span>${allRecords.length}</span></div>
+    <div class="meta-field"><label>TOTAL RECORDS</label><span>${sorted.length}</span></div>
     ${v.vin ? `<div class="meta-field"><label>VIN</label><span>${v.vin}</span></div>` : ''}
   </div>
 
@@ -375,12 +356,12 @@ export default function VehicleRecordsScreen() {
   ${mileageWarning ? `<p class="mileage-note">⚠ One or more records show odometer readings that are lower than a previous record. Please review highlighted entries.</p>` : ''}
   ` : ''}
 
-  <div class="section-title">Maintenance Records (${allRecords.length})</div>
+  <div class="section-title">Maintenance Records (${sorted.length})</div>
   ${recordRows}
 
   <div class="verify-section">
-    <div class="verify-title">EXPORT VERIFICATION</div>
-    <div class="verify-hash">SHA-256: ${exportHash}</div>
+    <div class="verify-title">CHECK THIS REPORT</div>
+    <div>Compare the records in this report with MXTracker's saved records at the link below. If any details differ, this is not an unchanged copy.</div>
     <div class="verify-url">Verify at: confirm.mxtracker.app/verify/${exportId}</div>
   </div>
 
@@ -405,7 +386,11 @@ export default function VehicleRecordsScreen() {
                 }
               } else {
                 // Mobile: use expo-print and expo-sharing
-                const { uri: tmpUri } = await Print.printToFileAsync({ html, base64: false })
+                const { uri: tmpUri } = await Print.printToFileAsync({
+                  html,
+                  base64: false,
+                  margins: { top: 40, right: 32, bottom: 40, left: 32 },
+                })
                 // Rename to a human-readable filename before sharing
                 const safeFilename = `${v.year}_${v.make}_${v.model}_mxlog`
                   .replace(/\s+/g, '_')
@@ -429,7 +414,9 @@ export default function VehicleRecordsScreen() {
               }
             } catch (err) {
               console.error('Export error:', err)
-              Alert.alert('Export Failed', 'Something went wrong generating the PDF. Please try again.')
+              const message = 'Something went wrong generating the PDF. Please try again.'
+              if (Platform.OS === 'web') window.alert(message)
+              else Alert.alert('Export Failed', message)
             } finally {
               setExporting(false)
             }
