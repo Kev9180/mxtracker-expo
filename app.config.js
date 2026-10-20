@@ -12,7 +12,7 @@ module.exports = {
     scheme: 'mxtracker',
     name: 'MXTracker',
     slug: 'mxtracker-expo',
-    version: '1.0.3',
+    version: '1.0.4',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
